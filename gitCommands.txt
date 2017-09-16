@@ -1,0 +1,13 @@
+git init
+git remote add origin  ""
+git pul origin master
+git push origin master
+git status
+git add --all
+git add <file_Name>
+git commit -m "commit message"
+git commit -a -m "commit message"
+git log
+git branch <branch_name>
+git checkout <branch_name>
+git checkout <branch_name>
