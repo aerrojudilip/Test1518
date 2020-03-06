@@ -1,0 +1,34 @@
+#--- Added for Redirection
+<Directory D:\IBM\cognos\analytics\webcontent>
+	<IfModule mod_deflate>
+		AddOutputFilterByType DEFLATE text/html application/json text/css application/javascript
+	</IfModule>
+	Options Indexes MultiViews
+	AllowOverride None
+	Require all granted
+</Directory>
+
+Alias /ibmcognos D:\IBM\cognos\analytics\webcontent
+RequestHeader set X-BI-PATH /ibmcognos/bi/v1
+
+<VirtualHost metlifedevrpting.com:443>
+	ServerName metlifedevrpting.com
+	SSLEnable
+	Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+	Redirect /index_ihs.html https://metlifedevrpting.com/ibmcognos
+
+	# Send default URL to service
+	RewriteRule ^/ibmcognos/bi/$ /bi/ [PT,L]
+	RewriteRule ^/ibmcognos/bi/([^/.]+(\.jsp)(.*)?)  /bi/$1 [PT,L]
+
+	# Rewrite Event Studio static references
+	RewriteCond %{HTTP_REFERER} v1/disp [NC,OR]
+	RewriteCond %{HTTP_REFERER} (ags|cr1|prompting|ccl|common|skins|ps|notifications)/(.*)\.css [NC]
+	RewriteRule ^/ibmcognos/bi/(ags|cr1|prompting|ccl|common|skins|ps|notifications)/(.*) /ibmcognos/$1/$2 [PT,L]
+
+	# Rewrite Saved-Output and Viewer static references
+	RewriteRule ^/ibmcognos/bi/rv/(.*)$ /ibmcognos/rv/$1 [PT,L]
+
+	# This rewrite rule should be at last
+	RewriteRule ^/ibmcognos/bi/(v1/(.*))  /bi/$1 [PT,L] 
+</VirtualHost>
