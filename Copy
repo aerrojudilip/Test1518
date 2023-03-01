@@ -1,0 +1,31 @@
+Sub ConnectToOracle()
+    Dim conn As ADODB.Connection
+    Dim rs As ADODB.Recordset
+    Dim sql As String
+    Dim i As Integer
+    
+    ' Establish a connection to the database
+    Set conn = New ADODB.Connection
+    conn.ConnectionString = "Provider=OraOLEDB.Oracle;Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=myHost)(PORT=myPort))(CONNECT_DATA=(SERVICE_NAME=myServiceName)));User ID=myUsername;Password=myPassword;"
+    conn.Open
+    
+    ' Execute the SQL query
+    sql = "SELECT * FROM myTable"
+    Set rs = New ADODB.Recordset
+    rs.Open sql, conn
+    
+    ' Display the results in the worksheet
+    i = 1
+    While Not rs.EOF
+        Range("A" & i).Value = rs.Fields("Column1").Value
+        Range("B" & i).Value = rs.Fields("Column2").Value
+        Range("C" & i).Value = rs.Fields("Column3").Value
+        ' Add more columns as needed
+        i = i + 1
+        rs.MoveNext
+    Wend
+    
+    ' Close the recordset and connection
+    rs.Close
+    conn.Close
+End Sub
