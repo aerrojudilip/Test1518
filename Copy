@@ -1,20 +1,67 @@
-import java.io.File;
+import java.io.*;
+import java.net.*;
 
-public class FileNameGetter {
-    public static void main(String[] args) {
-        File dir = new File("path/to/directory");
-        getFiles(dir);
-    }
-
-    public static void getFiles(File dir) {
-        File[] files = dir.listFiles();
-
-        for (File file : files) {
-            if (file.isDirectory()) {
-                getFiles(file); // recursion
-            } else {
-                System.out.println(file.getName());
+public class ProxyServer {
+    private static final int BUFFER_SIZE = 4096;
+    
+    public static void main(String[] args) throws IOException {
+        int port = 8080; // Change port number as needed
+        
+        ServerSocket serverSocket = new ServerSocket(port);
+        System.out.println("Proxy server started on port " + port + "...");
+        
+        while (true) {
+            Socket clientSocket = serverSocket.accept(); // Wait for client to connect
+            System.out.println("Client connected from " + clientSocket.getInetAddress() + ":" + clientSocket.getPort());
+            
+            // Read request from client
+            BufferedReader clientReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            String requestLine = clientReader.readLine();
+            String[] requestParts = requestLine.split(" ");
+            String method = requestParts[0];
+            String url = requestParts[1];
+            
+            // Connect to remote server
+            URL remoteUrl = new URL(url);
+            HttpURLConnection connection = (HttpURLConnection) remoteUrl.openConnection();
+            connection.setRequestMethod(method);
+            
+            // Forward headers from client to remote server
+            String headerLine;
+            while ((headerLine = clientReader.readLine()) != null) {
+                if (headerLine.trim().isEmpty()) {
+                    break;
+                }
+                String[] headerParts = headerLine.split(":");
+                String headerName = headerParts[0];
+                String headerValue = headerParts[1].trim();
+                connection.setRequestProperty(headerName, headerValue);
             }
+            
+            // Forward request body from client to remote server (if applicable)
+            if (method.equals("POST") || method.equals("PUT")) {
+                connection.setDoOutput(true);
+                OutputStream outputStream = connection.getOutputStream();
+                byte[] buffer = new byte[BUFFER_SIZE];
+                int bytesRead;
+                while ((bytesRead = clientSocket.getInputStream().read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                outputStream.close();
+            }
+            
+            // Read response from remote server
+            InputStream inputStream = connection.getInputStream();
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int bytesRead;
+            OutputStream outputStream = clientSocket.getOutputStream();
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            outputStream.close();
+            
+            clientSocket.close(); // Close client socket
+            System.out.println("Response forwarded to client " + clientSocket.getInetAddress() + ":" + clientSocket.getPort());
         }
     }
 }
