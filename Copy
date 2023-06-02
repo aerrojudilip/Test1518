@@ -1,94 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Dropdown Example</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <title>Data Grid Example</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
 </head>
 <body>
   <div class="container">
-    <h1>Dropdown Example</h1>
-    
-    <div class="form-group">
-      <label for="country">Country:</label>
-      <select id="country" class="form-control">
-        <option value="1">USA</option>
-        <option value="2">Canada</option>
-      </select>
-    </div>
+    <h1>Data Grid Example</h1>
 
-    <div class="form-group">
-      <label for="city">City:</label>
-      <select id="city" class="form-control" style="display: none;"></select>
-    </div>
-    
-    <div class="form-group">
-      <label for="location">Location:</label>
-      <select id="location" class="form-control" style="display: none;"></select>
-    </div>
+    <table id="data-grid" class="display" style="width:100%">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Population</th>
+        </tr>
+      </thead>
+    </table>
   </div>
-  
+
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-  
+  <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js"></script>
+
   <script>
     $(document).ready(function() {
-      // When the country dropdown value changes
-      $('#country').change(function() {
-        var countryId = $(this).val(); // Get the selected country value
-        
-        // Make an AJAX request to the REST API for cities
-        $.ajax({
-          url: '/api/cities?country=' + countryId,
-          method: 'GET',
-          success: function(data) {
-            var cityDropdown = $('#city'); // Get the city dropdown
-            
-            // Clear previous options
-            cityDropdown.empty();
-            
-            // Populate the city dropdown with the received data
-            $.each(data, function(index, city) {
-              cityDropdown.append('<option value="' + city.id + '">' + city.name + '</option>');
-            });
-            
-            // Show the city dropdown
-            cityDropdown.show();
-            
-            // Hide the location dropdown
-            $('#location').hide();
-          },
-          error: function() {
-            console.log('Error occurred while fetching cities.');
-          }
-        });
-      });
-      
-      // When the city dropdown value changes
-      $('#city').change(function() {
-        var cityId = $(this).val(); // Get the selected city value
-        
-        // Make an AJAX request to the REST API for locations
-        $.ajax({
-          url: '/api/locations?city=' + cityId,
-          method: 'GET',
-          success: function(data) {
-            var locationDropdown = $('#location'); // Get the location dropdown
-            
-            // Clear previous options
-            locationDropdown.empty();
-            
-            // Populate the location dropdown with the received data
-            $.each(data, function(index, location) {
-              locationDropdown.append('<option value="' + location.id + '">' + location.name + '</option>');
-            });
-            
-            // Show the location dropdown
-            locationDropdown.show();
-          },
-          error: function() {
-            console.log('Error occurred while fetching locations.');
-          }
-        });
+      // Initialize DataTables with Buttons extension
+      var dataTable = $('#data-grid').DataTable({
+        dom: 'Bfrtip',
+        buttons: [
+          'copy', 'csv', 'excel', 'pdf', 'print'
+        ],
+        ajax: {
+          url: '/api/data',
+          dataSrc: ''
+        },
+        columns: [
+          { data: 'id' },
+          { data: 'name' },
+          { data: 'population' }
+        ]
       });
     });
   </script>
