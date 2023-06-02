@@ -1,82 +1,96 @@
-import java.io.*;
-import java.net.*;
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dropdown Example</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Dropdown Example</h1>
+    
+    <div class="form-group">
+      <label for="country">Country:</label>
+      <select id="country" class="form-control">
+        <option value="1">USA</option>
+        <option value="2">Canada</option>
+      </select>
+    </div>
 
-public class ProxyServer {
-
-    public static void main(String[] args) {
-        try {
-            ServerSocket serverSocket = new ServerSocket(8080); // create server socket on port 8080
-            System.out.println("Proxy server listening on port 8080...");
-
-            while (true) {
-                Socket clientSocket = serverSocket.accept(); // accept incoming client connection
-                System.out.println("Client connected from " + clientSocket.getInetAddress().getHostAddress());
-
-                // create new thread to handle client request
-                Thread t = new Thread(new ClientHandler(clientSocket));
-                t.start();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static class ClientHandler implements Runnable {
-        private Socket clientSocket;
-
-        public ClientHandler(Socket clientSocket) {
-            this.clientSocket = clientSocket;
-        }
-
-        public void run() {
-            try {
-                // create input/output streams for client socket
-                BufferedReader inFromClient = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                DataOutputStream outToClient = new DataOutputStream(clientSocket.getOutputStream());
-
-                // read client request
-                String request = inFromClient.readLine();
-                System.out.println("Client request: " + request);
-
-                // extract host and port from request
-                String[] requestParts = request.split(" ");
-                String host = requestParts[1];
-                int port = 80;
-                if (host.contains(":")) {
-                    String[] hostParts = host.split(":");
-                    host = hostParts[0];
-                    port = Integer.parseInt(hostParts[1]);
-                }
-
-                // create new socket to connect to requested host and port
-                Socket serverSocket = new Socket(host, port);
-                System.out.println("Connected to " + host + ":" + port);
-
-                // create input/output streams for server socket
-                BufferedReader inFromServer = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
-                DataOutputStream outToServer = new DataOutputStream(serverSocket.getOutputStream()));
-
-                // forward client request to server
-                outToServer.writeBytes(request + "\n");
-
-                // read server response and forward to client
-                String response;
-                while ((response = inFromServer.readLine()) != null) {
-                    System.out.println("Server response: " + response);
-                    outToClient.writeBytes(response + "\n");
-                }
-
-                // close sockets and streams
-                serverSocket.close();
-                clientSocket.close();
-                inFromServer.close();
-                outToServer.close();
-                inFromClient.close();
-                outToClient.close();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-}
+    <div class="form-group">
+      <label for="city">City:</label>
+      <select id="city" class="form-control" style="display: none;"></select>
+    </div>
+    
+    <div class="form-group">
+      <label for="location">Location:</label>
+      <select id="location" class="form-control" style="display: none;"></select>
+    </div>
+  </div>
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  
+  <script>
+    $(document).ready(function() {
+      // When the country dropdown value changes
+      $('#country').change(function() {
+        var countryId = $(this).val(); // Get the selected country value
+        
+        // Make an AJAX request to the REST API for cities
+        $.ajax({
+          url: '/api/cities?country=' + countryId,
+          method: 'GET',
+          success: function(data) {
+            var cityDropdown = $('#city'); // Get the city dropdown
+            
+            // Clear previous options
+            cityDropdown.empty();
+            
+            // Populate the city dropdown with the received data
+            $.each(data, function(index, city) {
+              cityDropdown.append('<option value="' + city.id + '">' + city.name + '</option>');
+            });
+            
+            // Show the city dropdown
+            cityDropdown.show();
+            
+            // Hide the location dropdown
+            $('#location').hide();
+          },
+          error: function() {
+            console.log('Error occurred while fetching cities.');
+          }
+        });
+      });
+      
+      // When the city dropdown value changes
+      $('#city').change(function() {
+        var cityId = $(this).val(); // Get the selected city value
+        
+        // Make an AJAX request to the REST API for locations
+        $.ajax({
+          url: '/api/locations?city=' + cityId,
+          method: 'GET',
+          success: function(data) {
+            var locationDropdown = $('#location'); // Get the location dropdown
+            
+            // Clear previous options
+            locationDropdown.empty();
+            
+            // Populate the location dropdown with the received data
+            $.each(data, function(index, location) {
+              locationDropdown.append('<option value="' + location.id + '">' + location.name + '</option>');
+            });
+            
+            // Show the location dropdown
+            locationDropdown.show();
+          },
+          error: function() {
+            console.log('Error occurred while fetching locations.');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
