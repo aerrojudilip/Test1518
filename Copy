@@ -1,50 +1,148 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Data Grid Example</title>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
+  <title>Data Grid with Export</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Data Grid Example</h1>
 
-    <table id="data-grid" class="display" style="width:100%">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Population</th>
-        </tr>
-      </thead>
-    </table>
+<div class="container mt-5">
+  <h1>Data Grid with Export</h1>
+  <div class="row mb-3">
+    <div class="col">
+      <button id="exportExcelButton" class="btn btn-success">Export to Excel</button>
+      <button id="exportPdfButton" class="btn btn-danger">Export to PDF</button>
+      <button id="exportCsvButton" class="btn btn-primary">Export to CSV</button>
+    </div>
+    <div class="col text-right">
+      <div class="form-check">
+        <input type="checkbox" id="selectAllCheckbox" class="form-check-input">
+        <label class="form-check-label" for="selectAllCheckbox">Select All</label>
+      </div>
+    </div>
   </div>
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js"></script>
+  <table id="dataGrid" class="table table-striped">
+    <thead>
+      <tr>
+        <th></th> <!-- Empty column for checkboxes -->
+        <th>Column 1</th>
+        <th>Column 2</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="checkbox" class="row-checkbox"></td>
+        <td>Row 1 Data 1</td>
+        <td>Row 1 Data 2</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" class="row-checkbox"></td>
+        <td>Row 2 Data 1</td>
+        <td>Row 2 Data 2</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" class="row-checkbox"></td>
+        <td>Row 3 Data 1</td>
+        <td>Row 3 Data 2</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
-  <script>
-    $(document).ready(function() {
-      // Initialize DataTables with Buttons extension
-      var dataTable = $('#data-grid').DataTable({
-        dom: 'Bfrtip',
-        buttons: [
-          'copy', 'csv', 'excel', 'pdf', 'print'
-        ],
-        ajax: {
-          url: '/api/data',
-          dataSrc: ''
-        },
-        columns: [
-          { data: 'id' },
-          { data: 'name' },
-          { data: 'population' }
-        ]
-      });
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  var dataGrid = $('#dataGrid').DataTable();
+
+  // "Select All" checkbox functionality
+  $('#selectAllCheckbox').on('change', function() {
+    $('.row-checkbox').prop('checked', $(this).is(':checked'));
+  });
+
+  // Individual row checkbox functionality
+  $('.row-checkbox').on('change', function() {
+    if ($('.row-checkbox:checked').length === $('.row-checkbox').length) {
+      $('#selectAllCheckbox').prop('checked', true);
+    } else {
+      $('#selectAllCheckbox').prop('checked', false);
+    }
+  });
+
+  // Export to Excel
+  $('#exportExcelButton').on('click', function() {
+    var selectedRows = [];
+    $('.row-checkbox:checked').each(function() {
+      var rowData = $(this).closest('tr').find('td').map(function() {
+        return $(this).text();
+      }).get();
+      selectedRows.push(rowData);
     });
-  </script>
+
+    // Convert selected rows to worksheet
+    var worksheet = XLSX.utils.json_to_sheet(selectedRows, { header: ['Column 1', 'Column 2'] });
+    var workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+    var excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+    // Save as Excel file
+    var excelBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(excelBlob, 'export.xlsx');
+  });
+
+  // Export to PDF
+  $('#exportPdfButton').on('click', function() {
+    var selectedRows = [];
+    $('.row-checkbox:checked').each(function() {
+      var rowData = $(this).closest('tr').find('td').map(function() {
+        return $(this).text();
+      }).get();
+      selectedRows.push(rowData);
+    });
+
+    // Convert selected rows to PDF content
+    var doc = new jsPDF();
+    doc.text('Data Grid Export', 10, 10);
+    doc.autoTable({
+      head: [['Column 1', 'Column 2']],
+      body: selectedRows
+    });
+
+    // Save as PDF file
+    doc.save('export.pdf');
+  });
+
+  // Export to CSV
+  $('#exportCsvButton').on('click', function() {
+    var selectedRows = [];
+    $('.row-checkbox:checked').each(function() {
+      var rowData = $(this).closest('tr').find('td').map(function() {
+        return $(this).text();
+      }).get();
+      selectedRows.push(rowData);
+    });
+
+    // Convert selected rows to CSV format
+    var csvContent = "data:text/csv;charset=utf-8,";
+    selectedRows.forEach(function(row) {
+      var dataString = row.join(",");
+      csvContent += dataString + "\r\n";
+    });
+
+    // Save as CSV file
+    var csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    saveAs(csvBlob, 'export.csv');
+  });
+});
+</script>
+
 </body>
 </html>
