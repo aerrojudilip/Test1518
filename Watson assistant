@@ -1,0 +1,7 @@
+integrationID : fce54ce3-01e5-4986-81ba-4aaaa23e36bf
+
+region : us-south
+
+src : https://web-chat.global.assistant.watson.appdomain.cloud/loadWatsonAssistantChat.js
+
+Assistant Image URLs : https://assistant-chat-us-south.watsonplatform.net
