@@ -1,0 +1,31 @@
+LoadModule headers_module modules/mod_headers.so
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+
+<Location /ibmcognos/bi>
+RequestHeader set X-BI-PATH /ibmcognos/bi/v1
+ProxyPass http://OPGP82:9300/bi
+ProxyPassReverse http://OPGP82:9300/bi
+ProxyPassReverseCookieDomain . ibm.com
+</Location>
+
+ScriptAlias /ibmcognos/cgi-bin "D:\IBM\cognos\analytics\cgi-bin"
+<Directory "D:\IBM\cognos\analytics\cgi-bin">
+AllowOverride FileInfo
+Options FollowSymLinks
+Require all granted
+</Directory>
+
+Alias /ibmcognos/help "D:\IBM\cognos\analytics\webcontent\documentation"
+<Directory "D:\IBM\cognos\analytics\webcontent\documentation">
+AllowOverride FileInfo
+Options FollowSymLinks
+Require all granted
+</Directory>
+
+Alias /ibmcognos "D:\IBM\cognos\analytics\webcontent"
+<Directory "D:\IBM\cognos\analytics\webcontent">
+AllowOverride FileInfo
+Options FollowSymLinks
+Require all granted
+</Directory>
