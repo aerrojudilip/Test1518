@@ -1,142 +1,29 @@
+Objective:
+Seeking a Technical Lead position specializing in IBM OpenPages, where my expertise in orchestrating seamless upgrades, integrating connectors like Watson and UCF, as well as leading server patching initiatives and bug-fixing teams will contribute to the holistic improvement of risk management solutions.
 
-Pattern.compile("\\|[^|]*\\|[^|]*\\|([^\s|]+)\\|[^|]*\\|")
+Outcome:
+My goal is to lead the technical team in executing flawless server patching, bug fixing, and orchestrating upgrades, resulting in a robust and efficient risk management system. The outcome includes improved system stability, enhanced functionality, and a team adept at resolving issues promptly.
 
-<!DOCTYPE html>
-<html lang="en">
+Objective:
+Aspiring to secure a Technical Lead role in IBM OpenPages, with a focus on driving server patching initiatives and leading bug-fixing teams. Dedicated to optimizing project delivery, ensuring system reliability through patch management, and harnessing connectors like Watson to augment the organization's risk management capabilities.
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
-  <title>Dropdown Menu with JSON and Bootstrap</title>
-</head>
+Outcome:
+Through effective leadership, my aim is to optimize project delivery, ensure system reliability through timely server patching, and lead bug-fixing teams to enhance the overall stability of the risk management system. The outcome includes a resilient and efficient system, improved operational reliability, and a team proficient in resolving issues promptly.
 
-<body>
+Objective:
+Goal-oriented Technical Lead with a focus on IBM OpenPages, aiming to provide strategic direction for server patching, bug fixing, and seamless integration of connectors like Watson and UCF. Committed to fostering a collaborative environment that promotes continuous improvement and technical excellence.
 
-  <div class="container">
-    <div class="dropdown mt-4">
-      <select id="level1" class="form-control"></select>
-      <select id="level2" class="form-control"></select>
-      <select id="level3" class="form-control"></select>
-      <select id="level4" class="form-control"></select>
-    </div>
-  </div>
+Outcome:
+I intend to provide strategic direction for server patching, bug fixing, and seamless integration of connectors, fostering a collaborative environment that encourages continuous improvement. The desired outcome is a system that is not only up-to-date and stable but also a team that excels in addressing and resolving issues promptly.
 
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
-  <script>
-    $(document).ready(function() {
-      var jsonData = {
-        "level1": [
-          { "id": 1, "name": "Option 1" },
-          { "id": 2, "name": "Option 2" },
-          { "id": 3, "name": "Option 3" }
-        ],
-        "level2": {
-          "1": [
-            { "id": 4, "name": "Option 1.1" },
-            { "id": 5, "name": "Option 1.2" },
-            { "id": 6, "name": "Option 1.3" }
-          ],
-          "2": [
-            { "id": 7, "name": "Option 2.1" },
-            { "id": 8, "name": "Option 2.2" },
-            { "id": 9, "name": "Option 2.3" }
-          ],
-          "3": [
-            { "id": 10, "name": "Option 3.1" },
-            { "id": 11, "name": "Option 3.2" },
-            { "id": 12, "name": "Option 3.3" }
-          ]
-        },
-        "level3": {
-          "4": [
-            { "id": 13, "name": "Option 1.1.1" },
-            { "id": 14, "name": "Option 1.1.2" },
-            { "id": 15, "name": "Option 1.1.3" }
-          ],
-          "5": [
-            { "id": 16, "name": "Option 1.2.1" },
-            { "id": 17, "name": "Option 1.2.2" },
-            { "id": 18, "name": "Option 1.2.3" }
-          ],
-          "6": [
-            { "id": 19, "name": "Option 1.3.1" },
-            { "id": 20, "name": "Option 1.3.2" },
-            { "id": 21, "name": "Option 1.3.3" }
-          ]
-        },
-        "level4": {
-          "13": [
-            { "id": 22, "name": "Option 1.1.1.1" },
-            { "id": 23, "name": "Option 1.1.1.2" },
-            { "id": 24, "name": "Option 1.1.1.3" }
-          ],
-          "16": [
-            { "id": 25, "name": "Option 1.2.1.1" },
-            { "id": 26, "name": "Option 1.2.1.2" },
-            { "id": 27, "name": "Option 1.2.1.3" }
-          ],
-          "19": [
-            { "id": 28, "name": "Option 1.3.1.1" },
-            { "id": 29, "name": "Option 1.3.1.2" },
-            { "id": 30, "name": "Option 1.3.1.3" }
-          ]
-        }
-      };
+Objective:
+Experienced Technical Lead seeking a challenging role in IBM OpenPages, with a specific focus on orchestrating server patching and leading bug-fixing initiatives. Committed to mentoring team members, optimizing development processes, and ensuring successful project outcomes aligned with organizational goals.
 
-      // Populate the first level dropdown
-      $.each(jsonData.level1, function(index, item) {
-        $('#level1').append($('<option>', {
-          value: item.id,
-          text: item.name
-        }));
-      });
+Outcome:
+My objective is to lead server patching initiatives and bug-fixing teams, optimizing development processes and mentoring the team for success. The desired outcome includes a stable and efficiently patched system, streamlined development processes, and a team capable of consistently delivering successful project outcomes.
 
-      // Handle level 1 change event
-      $('#level1').on('change', function() {
-        var selectedLevel1 = $(this).val();
-        $('#level2').empty();
-        $('#level3').empty();
-        $('#level4').empty();
+Objective:
+Technical Lead with a passion for IBM OpenPages, aiming to contribute hands-on technical expertise in orchestrating server patching and leading bug-fixing efforts. Committed to fostering a collaborative and innovative team environment that ensures the delivery of high-quality, patched, and bug-free risk management solutions.
 
-        $.each(jsonData.level2[selectedLevel1], function(index, item) {
-          $('#level2').append($('<option>', {
-            value: item.id,
-            text: item.name
-          }));
-        });
-      });
-
-      // Handle level 2 change event
-      $('#level2').on('change', function() {
-        var selectedLevel2 = $(this).val();
-        $('#level3').empty();
-        $('#level4').empty();
-
-        $.each(jsonData.level3[selectedLevel2], function(index, item) {
-          $('#level3').append($('<option>', {
-            value: item.id,
-            text: item.name
-          }));
-        });
-      });
-
-      // Handle level 3 change event
-      $('#level3').on('change', function() {
-        var selectedLevel3 = $(this).val();
-        $('#level4').empty();
-
-        $.each(jsonData.level4[selectedLevel3], function(index, item) {
-          $('#level4').append($('<option>', {
-            value: item.id,
-            text: item.name
-          }));
-        });
-      });
-    });
-  </script>
-
-</body>
-
-</html>
+Outcome:
+I aspire to lead a collaborative and innovative technical team in orchestrating server patching and addressing bugs promptly. The desired outcome involves delivering high-quality, stable risk management solutions, improved system reliability, and a team adept at maintaining and enhancing the system's overall health.
