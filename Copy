@@ -1,13 +1,50 @@
-DECLARE
-  search_value VARCHAR2(100) := 'your_search_value';
-  sql_query VARCHAR2(200);
-BEGIN
-  FOR t IN (SELECT table_name FROM all_tables) LOOP
-    FOR c IN (SELECT column_name FROM all_tab_columns WHERE table_name = t.table_name) LOOP
-      sql_query := 'SELECT * FROM ' || t.table_name || ' WHERE ' || c.column_name || ' = :value';
-      -- Uncomment the following line to execute the generated SQL query
-      -- EXECUTE IMMEDIATE sql_query USING search_value;
-    END LOOP;
-  END LOOP;
-END;
-/
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import org.apache.poi.ss.usermodel.*;
+
+public class ExcelComparator {
+    public static void main(String[] args) {
+        String file1Path = "file1.xlsx";
+        String file2Path = "file2.xlsx";
+
+        try {
+            HashMap<String, String> file1Data = readExcel(file1Path);
+            HashMap<String, String> file2Data = readExcel(file2Path);
+
+            // Compare the two HashMaps to find delta changes
+            for (String key : file1Data.keySet()) {
+                String value1 = file1Data.get(key);
+                String value2 = file2Data.get(key);
+
+                if (!value1.equals(value2)) {
+                    System.out.println("Change detected in key: " + key);
+                    System.out.println("File1 value: " + value1);
+                    System.out.println("File2 value: " + value2);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static HashMap<String, String> readExcel(String filePath) throws IOException {
+        HashMap<String, String> data = new HashMap<>();
+        FileInputStream fis = new FileInputStream(new File(filePath));
+        Workbook workbook = WorkbookFactory.create(fis);
+        Sheet sheet = workbook.getSheetAt(0); // Assuming data is in the first sheet
+
+        for (Row row : sheet) {
+            Cell keyCell = row.getCell(0); // Assuming key is in the first column
+            Cell valueCell = row.getCell(1); // Assuming value is in the second column
+            String key = keyCell.getStringCellValue();
+            String value = valueCell.getStringCellValue();
+            data.put(key, value);
+        }
+
+        workbook.close();
+        fis.close();
+        return data;
+    }
+}
