@@ -1,0 +1,268 @@
+{
+  "headers": [
+    {
+      "name": "Loss",
+      "fields": ["LossField1", "LossField2", "LossField3"]
+    },
+    {
+      "name": "Cost",
+      "fields": ["CostField1", "CostField2", "CostField3"]
+    },
+    {
+      "name": "Entity",
+      "fields": ["EntityField1", "EntityField2", "EntityField3"]
+    }
+  ],
+  "columns": {
+    "LossField1": {
+      "index": 1,
+      "conversion": "int",
+      "default": "0"
+    },
+    "LossField2": {
+      "index": 2,
+      "conversion": "float",
+      "default": "0.0"
+    },
+    "LossField3": {
+      "index": 3,
+      "conversion": "date",
+      "format": "yyyy-MM-dd",
+      "default": "current_date"
+    },
+    "CostField1": {
+      "index": 4,
+      "conversion": "currency",
+      "value": "EUR",
+      "default": "0"
+    },
+    "CostField2": {
+      "index": 5,
+      "conversion": "multiply",
+      "value": "2",
+      "default": "0"
+    },
+    "CostField3": {
+      "index": 6,
+      "conversion": "default",
+      "default": "N/A"
+    },
+    "EntityField1": {
+      "index": 7,
+      "conversion": "equal",
+      "value": "Active",
+      "default": "Inactive"
+    },
+    "EntityField2": {
+      "index": 8,
+      "conversion": "dependent",
+      "dependent": "CostField1",
+      "calculation_type": "add",
+      "default": "0"
+    },
+    "EntityField3": {
+      "index": 9,
+      "conversion": "dependent",
+      "dependent": "LossField2",
+      "calculation_type": "multiply",
+      "default": "0.0"
+    }
+  },
+  "exchange_rates": {
+    "USD_EUR": 0.84,
+    "USD_GBP": 0.72
+    // Add more exchange rates as needed
+  }
+}
+
+# File
+Loss,10,15.5,,Cost,20,25.5,,Entity,Active,25.5,10
+Loss,5,10.75,,Cost,15,20.75,,Entity,Inactive,20.75,5.5
+
+#Java File
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+public class FileReaderWithConfig {
+
+    private static ObjectMapper objectMapper = new ObjectMapper();
+
+    public static void main(String[] args) {
+        String filePath = "data.txt";
+        String configPath = "config.json";
+
+        try {
+            JsonNode config = readConfig(configPath);
+            readFileWithConfig(filePath, config);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static JsonNode readConfig(String configPath) throws IOException {
+        return objectMapper.readTree(new FileReader(configPath));
+    }
+
+    public static void readFileWithConfig(String filePath, JsonNode config) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
+        String line;
+        Map<String, List<String>> headerMap = parseHeaders(reader);
+
+        while ((line = reader.readLine()) != null) {
+            String[] columns = line.split(",");
+            for (Map.Entry<String, List<String>> entry : headerMap.entrySet()) {
+                String headerName = entry.getKey();
+                List<String> fields = entry.getValue();
+                if (fields.size() + 1 <= columns.length && columns[0].equals(headerName)) {
+                    System.out.println(headerName + ": ");
+                    for (int i = 0; i < fields.size(); i++) {
+                        String fieldName = fields.get(i);
+                        String value = columns[i + 1];
+                        String convertedValue = applyConversion(value, fieldName, config, columns);
+                        System.out.println("\t" + fieldName + ": " + convertedValue);
+                    }
+                }
+            }
+        }
+
+        reader.close();
+    }
+
+    public static Map<String, List<String>> parseHeaders(BufferedReader reader) throws IOException {
+        Map<String, List<String>> headerMap = new HashMap<>();
+        String line = reader.readLine();
+        String[] headers = line.split(",");
+        String currentHeaderName = "";
+        List<String> currentFields = new ArrayList<>();
+        for (String header : headers) {
+            if (header.equals("Loss") || header.equals("Cost") || header.equals("Entity")) {
+                if (!currentHeaderName.isEmpty()) {
+                    headerMap.put(currentHeaderName, currentFields);
+                    currentFields = new ArrayList<>();
+                }
+                currentHeaderName = header;
+            } else {
+                currentFields.add(header);
+            }
+        }
+        if (!currentHeaderName.isEmpty()) {
+            headerMap.put(currentHeaderName, currentFields);
+        }
+        return headerMap;
+    }
+
+    public static String applyConversion(String value, String fieldName, JsonNode config, String[] columns) {
+        JsonNode columnsConfig = config.get("columns");
+        JsonNode fieldConfig = columnsConfig.get(fieldName);
+        String conversionType = fieldConfig.get("conversion").asText();
+        String defaultValue = fieldConfig.get("default").asText();
+
+        switch (conversionType) {
+            case "equal":
+                String compareValue = fieldConfig.get("value").asText();
+                return value.equals(compareValue) ? "EQUAL" : "NOT EQUAL";
+            case "greater":
+                double greaterThan = Double.parseDouble(fieldConfig.get("value").asText());
+                double fieldValue = Double.parseDouble(value);
+                return fieldValue > greaterThan ? "GREATER" : "LESSER OR EQUAL";
+            case "lesser":
+                double lesserThan = Double.parseDouble(fieldConfig.get("value").asText());
+                fieldValue = Double.parseDouble(value);
+                return fieldValue < lesserThan ? "LESSER" : "GREATER OR EQUAL";
+            case "multiply":
+                double multiplier = Double.parseDouble(fieldConfig.get("value").asText());
+                fieldValue = Double.parseDouble(value);
+                return String.valueOf(fieldValue * multiplier);
+            case "divide":
+                double divisor = Double.parseDouble(fieldConfig.get("value").asText());
+                fieldValue = Double.parseDouble(value);
+                return String.valueOf(fieldValue / divisor);
+            case "date":
+                String dateFormat = fieldConfig.get("format").asText();
+                try {
+                    Date date = new SimpleDateFormat(dateFormat).parse(value);
+                    return new SimpleDateFormat("dd/MM/yyyy").format(date);
+                } catch (ParseException e) {
+                    return "Invalid Date Format";
+                }
+            case "currency":
+                String targetCurrency = fieldConfig.get("value").asText();
+                double exchangeRate = getExchangeRate("USD_" + targetCurrency);
+                fieldValue = Double.parseDouble(value);
+                return String.format("%.2f", fieldValue * exchangeRate);
+            case "float":
+                return String.valueOf(Float.parseFloat(value));
+            case "int":
+                return String.valueOf(Integer.parseInt(value));
+            case "dependent":
+                String dependentFieldName = fieldConfig.get("dependent").asText();
+                String calculationType = fieldConfig.get("calculation_type").asText();
+                double dependentValue = Double.parseDouble(columns[getColumnIndex(dependentFieldName, config)]);
+                double result = 0.0;
+                switch (calculationType) {
+                    case "add":
+                        result = dependentValue + Double.parseDouble(value);
+                        break;
+                    case "subtract":
+                        result = dependentValue - Double.parseDouble(value);
+                        break;
+                    case "multiply":
+                        result = dependentValue * Double.parseDouble(value);
+                        break;
+                    case "divide":
+                        result = dependentValue / Double.parseDouble(value);
+                        break;
+                }
+                return String.valueOf(result);
+            case "default":
+                if (defaultValue.equals("current_date")) {
+                    int columnIndex = getColumnIndex(fieldName, config);
+                    if (columnIndex != -1) {
+                        return columns[columnIndex];
+                    } else {
+                        return "No value found for current date";
+                    }
+                } else {
+                    return defaultValue;
+                }
+            default:
+                return value;
+        }
+    }
+
+    public static int getColumnIndex(String fieldName, JsonNode config) {
+        JsonNode columnsConfig = config.get("columns");
+        JsonNode fieldConfig = columnsConfig.get(fieldName);
+        String systemName = fieldConfig.has("system_name") ? fieldConfig.get("system_name").asText() : null;
+        JsonNode headersConfig = config.get("headers");
+        for (JsonNode header : headersConfig) {
+            JsonNode fields = header.get("fields");
+            for (JsonNode field : fields) {
+                String fieldText = field.asText();
+                if (systemName != null && systemName.equals(fieldText)) {
+                    return fields.indexOf(field);
+                }
+            }
+        }
+        return -1;
+    }
+
+    public static double getExchangeRate(String currencyPair) {
+        // Simulated exchange rates
+        Map<String, Double> exchangeRates = new HashMap<>();
+        exchangeRates.put("USD_EUR", 0.84);
+        exchangeRates.put("USD_GBP", 0.72);
+        return exchangeRates.getOrDefault(currencyPair, 1.0);
+    }
+}
+
+
+
