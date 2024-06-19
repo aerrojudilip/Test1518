@@ -52,3 +52,16 @@ SELECT *
 FROM WeeklyLogins
 WHERE login_week >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)  -- Filter last 6 months
 ORDER BY username, login_week ASC;  -- Order by username and login week
+--------------------------------------------------------------------------------------------------------------------------------
+
+LoadModule rewrite_module modules/mod_rewrite.so
+LoadModule headers_module modules/mod_headers.so
+
+LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" \"%{Authorization}i\"" export_log
+CustomLog "/path/to/your/export_log_file.log" export_log env=export_url
+
+RewriteEngine On
+RewriteCond %{REQUEST_URI} /export [NC]
+RewriteRule .* - [E=export_url:1]
+
+Header add export_url "%{export_url}e"
