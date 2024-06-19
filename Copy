@@ -37,3 +37,18 @@ ON
 ORDER BY 
     w.week_start,                                            -- Order by week start
     l.user_id;                                               -- Then by user ID
+----------------------------------------------------------------------------------------------------------------------------
+
+WITH WeeklyLogins AS (
+  SELECT 
+    u.username,  -- Replace 'username' with the actual username column name
+    DATE_TRUNC('week', ul.login_time) AS login_week,  -- Truncate to week
+    COUNT(*) AS login_count
+  FROM user_logins ul
+  INNER JOIN users u ON ul.user_id = u.id
+  GROUP BY u.username, DATE_TRUNC('week', ul.login_time)
+)
+SELECT *
+FROM WeeklyLogins
+WHERE login_week >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)  -- Filter last 6 months
+ORDER BY username, login_week ASC;  -- Order by username and login week
