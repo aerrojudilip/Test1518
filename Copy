@@ -1,50 +1,39 @@
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import org.apache.poi.ss.usermodel.*;
+-- Step 1: Generate a series of week start dates for the past 6 months
+WITH weeks AS (
+    SELECT
+        generate_series(
+            date_trunc('week', NOW() - INTERVAL '6 months'),  -- Start date: beginning of the week, 6 months ago
+            date_trunc('week', NOW()),                        -- End date: beginning of the current week
+            '1 week'::interval                                -- Interval: 1 week
+        ) AS week_start                                       -- Alias for the generated dates
+),
 
-public class ExcelComparator {
-    public static void main(String[] args) {
-        String file1Path = "file1.xlsx";
-        String file2Path = "file2.xlsx";
+-- Step 2: Aggregate login counts per user per week
+logins AS (
+    SELECT 
+        user_id,
+        date_trunc('week', login_time) AS week_start,        -- Truncate login_time to the start of the week
+        COUNT(*) AS login_count                              -- Count the number of logins per user per week
+    FROM 
+        user_logins
+    WHERE 
+        login_time >= NOW() - INTERVAL '6 months'            -- Filter logins to the past 6 months
+        AND login_time < NOW()                               -- Ensure logins are up to the current time
+    GROUP BY 
+        user_id, week_start                                  -- Group by user and week start
+)
 
-        try {
-            HashMap<String, String> file1Data = readExcel(file1Path);
-            HashMap<String, String> file2Data = readExcel(file2Path);
-
-            // Compare the two HashMaps to find delta changes
-            for (String key : file1Data.keySet()) {
-                String value1 = file1Data.get(key);
-                String value2 = file2Data.get(key);
-
-                if (!value1.equals(value2)) {
-                    System.out.println("Change detected in key: " + key);
-                    System.out.println("File1 value: " + value1);
-                    System.out.println("File2 value: " + value2);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static HashMap<String, String> readExcel(String filePath) throws IOException {
-        HashMap<String, String> data = new HashMap<>();
-        FileInputStream fis = new FileInputStream(new File(filePath));
-        Workbook workbook = WorkbookFactory.create(fis);
-        Sheet sheet = workbook.getSheetAt(0); // Assuming data is in the first sheet
-
-        for (Row row : sheet) {
-            Cell keyCell = row.getCell(0); // Assuming key is in the first column
-            Cell valueCell = row.getCell(1); // Assuming value is in the second column
-            String key = keyCell.getStringCellValue();
-            String value = valueCell.getStringCellValue();
-            data.put(key, value);
-        }
-
-        workbook.close();
-        fis.close();
-        return data;
-    }
-}
+-- Step 3: Combine the weeks and logins data, ensuring all weeks are included
+SELECT
+    w.week_start,                                            -- Select week start date
+    l.user_id,                                               -- Select user ID
+    COALESCE(l.login_count, 0) AS login_count                -- Ensure login count is 0 if no logins for that week
+FROM 
+    weeks w
+LEFT JOIN 
+    logins l
+ON 
+    w.week_start = l.week_start                              -- Join on week start date
+ORDER BY 
+    w.week_start,                                            -- Order by week start
+    l.user_id;                                               -- Then by user ID
