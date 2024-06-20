@@ -65,3 +65,14 @@ RewriteCond %{REQUEST_URI} /export [NC]
 RewriteRule .* - [E=export_url:1]
 
 Header add export_url "%{export_url}e"
+
+
+# Define a custom log format
+LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" export_log_format
+
+# Set environment variable for requests containing "export"
+SetEnvIf Request_URI "export" export_request
+
+# Log requests containing "export" to a separate file
+CustomLog logs/export_requests.log export_log_format env=export_request
+
