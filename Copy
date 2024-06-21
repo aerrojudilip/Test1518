@@ -1,6 +1,50 @@
 -- Step 1: Generate a series of week start dates for the past 6 months
 WITH weeks AS (
     SELECT
+        TRUNC(SYSDATE, 'IW') - (LEVEL - 1) * 7 AS week_start
+    FROM 
+        dual
+    CONNECT BY 
+        LEVEL <= 26
+),
+
+-- Step 2: Aggregate login counts per user per week
+logins AS (
+    SELECT 
+        user_id,
+        TRUNC(login_time, 'IW') AS week_start,
+        COUNT(*) AS login_count
+    FROM 
+        user_logins
+    WHERE 
+        login_time >= ADD_MONTHS(SYSDATE, -6)
+        AND login_time < SYSDATE
+    GROUP BY 
+        user_id, TRUNC(login_time, 'IW')
+)
+
+-- Step 3: Combine the weeks and logins data, ensuring all weeks are included
+SELECT
+    w.week_start,
+    l.user_id,
+    NVL(l.login_count, 0) AS login_count
+FROM 
+    weeks w
+LEFT JOIN 
+    logins l
+ON 
+    w.week_start = l.week_start
+ORDER BY 
+    w.week_start,
+    l.user_id;
+
+
+
+
+
+-- Step 1: Generate a series of week start dates for the past 6 months
+WITH weeks AS (
+    SELECT
         generate_series(
             date_trunc('week', NOW() - INTERVAL '6 months'),  -- Start date: beginning of the week, 6 months ago
             date_trunc('week', NOW()),                        -- End date: beginning of the current week
