@@ -223,3 +223,156 @@ private static void copySecondSheet(Workbook sourceWorkbook, Workbook targetWork
                 }
             }
         }
+
+
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.*;
+
+public class ExcelComparator {
+
+    public static void main(String[] args) throws IOException {
+        String file1Path = "path_to_first_excel_file.xlsx";
+        String file2Path = "path_to_second_excel_file.xlsx";
+        String resultPath = "path_to_result_excel_file.xlsx";
+
+        Workbook workbook1 = new XSSFWorkbook(new FileInputStream(file1Path));
+        Workbook workbook2 = new XSSFWorkbook(new FileInputStream(file2Path));
+        Workbook resultWorkbook = new XSSFWorkbook();
+
+        compareExcelFiles(workbook1, workbook2, resultWorkbook);
+        copySecondSheet(workbook2, resultWorkbook);
+        copyFirstRowFromFirstSheet(workbook2, resultWorkbook);
+
+        try (FileOutputStream fileOut = new FileOutputStream(resultPath)) {
+            resultWorkbook.write(fileOut);
+        }
+
+        workbook1.close();
+        workbook2.close();
+        resultWorkbook.close();
+    }
+
+    private static void compareExcelFiles(Workbook workbook1, Workbook workbook2, Workbook resultWorkbook) {
+        Sheet sheet1 = workbook1.getSheetAt(0);
+        Sheet sheet2 = workbook2.getSheetAt(0);
+        Sheet resultSheet = resultWorkbook.createSheet("Differences");
+
+        // Read content into maps for comparison
+        Map<Integer, List<String>> file1Content = readSheetContent(sheet1);
+        Map<Integer, List<String>> file2Content = readSheetContent(sheet2);
+
+        int rowCount = 0;
+        // Compare and find added/modified rows
+        for (Map.Entry<Integer, List<String>> entry : file2Content.entrySet()) {
+            int rowNum = entry.getKey();
+            List<String> row = entry.getValue();
+            if (!file1Content.containsKey(rowNum) || !file1Content.get(rowNum).equals(row)) {
+                Row resultRow = resultSheet.createRow(rowCount++);
+                for (int i = 0; i < row.size(); i++) {
+                    Cell cell = resultRow.createCell(i);
+                    cell.setCellValue(row.get(i));
+                }
+            }
+        }
+    }
+
+    private static Map<Integer, List<String>> readSheetContent(Sheet sheet) {
+        Map<Integer, List<String>> content = new HashMap<>();
+        for (Row row : sheet) {
+            List<String> rowContent = new ArrayList<>();
+            for (Cell cell : row) {
+                rowContent.add(getCellValue(cell));
+            }
+            content.put(row.getRowNum(), rowContent);
+        }
+        return content;
+    }
+
+    private static String getCellValue(Cell cell) {
+        if (cell == null) {
+            return "";
+        }
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                return String.valueOf(cell.getNumericCellValue());
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                return cell.getCellFormula();
+            case BLANK:
+                return "";
+            default:
+                return "Unknown Cell Type";
+        }
+    }
+
+    private static void copyCellValue(Cell sourceCell, Cell targetCell) {
+        if (sourceCell == null || targetCell == null) {
+            return;
+        }
+        switch (sourceCell.getCellType()) {
+            case STRING:
+                targetCell.setCellValue(sourceCell.getStringCellValue());
+                break;
+            case NUMERIC:
+                targetCell.setCellValue(sourceCell.getNumericCellValue());
+                break;
+            case BOOLEAN:
+                targetCell.setCellValue(sourceCell.getBooleanCellValue());
+                break;
+            case FORMULA:
+                targetCell.setCellFormula(sourceCell.getCellFormula());
+                break;
+            case BLANK:
+                targetCell.setBlank();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private static void copySecondSheet(Workbook sourceWorkbook, Workbook targetWorkbook) {
+        Sheet secondSheet = sourceWorkbook.getSheetAt(1); // Assuming the second sheet index is 1
+        Sheet newSheet = targetWorkbook.createSheet(secondSheet.getSheetName());
+
+        for (int i = 0; i <= secondSheet.getLastRowNum(); i++) {
+            Row sourceRow = secondSheet.getRow(i);
+            Row targetRow = newSheet.createRow(i);
+
+            if (sourceRow != null) {
+                for (int j = 0; j < sourceRow.getLastCellNum(); j++) {
+                    Cell sourceCell = sourceRow.getCell(j);
+                    Cell targetCell = targetRow.createCell(j);
+
+                    copyCellValue(sourceCell, targetCell);
+                }
+            }
+        }
+    }
+
+    private static void copyFirstRowFromFirstSheet(Workbook sourceWorkbook, Workbook targetWorkbook) {
+        Sheet sourceSheet = sourceWorkbook.getSheetAt(0); // First sheet
+        Sheet targetSheet = targetWorkbook.createSheet("FirstRow");
+
+        Row sourceRow = sourceSheet.getRow(0); // First row
+        if (sourceRow != null) {
+            Row targetRow = targetSheet.createRow(0);
+
+            for (int j = 0; j < sourceRow.getLastCellNum(); j++) {
+                Cell sourceCell = sourceRow.getCell(j);
+                Cell targetCell = targetRow.createCell(j);
+
+                copyCellValue(sourceCell, targetCell);
+            }
+        }
+    }
+}
+
