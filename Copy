@@ -1,3 +1,25 @@
+private static void sortSheetByColumn(Sheet sheet, int columnIndex) {
+        List<Row> rows = new ArrayList<>();
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            rows.add(sheet.getRow(i));
+        }
+
+        rows.sort(Comparator.comparing(row -> {
+            Cell cell = row.getCell(columnIndex);
+            return cell != null ? cell.toString() : "";
+        }));
+
+        int rowIndex = 1; // Skip the header row
+        for (Row row : rows) {
+            Row newRow = sheet.createRow(rowIndex++);
+            for (int i = 0; i < row.getLastCellNum(); i++) {
+                Cell oldCell = row.getCell(i);
+                Cell newCell = newRow.createCell(i);
+                copyCellValue(oldCell, newCell);
+            }
+        }
+    }
+
 -- Step 1: Generate a series of week start dates for the past 6 months
 WITH weeks AS (
     SELECT
