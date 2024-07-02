@@ -186,3 +186,40 @@ public class ExcelComparator {
         return content;
     }
 }
+private static void copySecondSheet(Workbook sourceWorkbook, Workbook targetWorkbook) {
+        Sheet secondSheet = sourceWorkbook.getSheetAt(1); // Assuming the second sheet index is 1
+        Sheet newSheet = targetWorkbook.createSheet(secondSheet.getSheetName());
+
+        for (int i = 0; i <= secondSheet.getLastRowNum(); i++) {
+            Row sourceRow = secondSheet.getRow(i);
+            Row targetRow = newSheet.createRow(i);
+
+            if (sourceRow != null) {
+                for (int j = 0; j < sourceRow.getLastCellNum(); j++) {
+                    Cell sourceCell = sourceRow.getCell(j);
+                    Cell targetCell = targetRow.createCell(j);
+
+                    if (sourceCell != null) {
+                        switch (sourceCell.getCellType()) {
+                            case STRING:
+                                targetCell.setCellValue(sourceCell.getStringCellValue());
+                                break;
+                            case NUMERIC:
+                                targetCell.setCellValue(sourceCell.getNumericCellValue());
+                                break;
+                            case BOOLEAN:
+                                targetCell.setCellValue(sourceCell.getBooleanCellValue());
+                                break;
+                            case FORMULA:
+                                targetCell.setCellFormula(sourceCell.getCellFormula());
+                                break;
+                            case BLANK:
+                                targetCell.setCellType(CellType.BLANK);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+        }
