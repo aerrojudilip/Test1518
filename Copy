@@ -1,3 +1,40 @@
+@echo off
+setlocal enabledelayedexpansion
+
+REM Define variables
+set NEXUS_URL=http://your-nexus-server/repository/maven-releases/
+set GROUP_ID=com.example
+set VERSION=1.0.0
+set PACKAGING=jar
+set USERNAME=your-username
+set PASSWORD=your-password
+
+REM Path to the directory containing your JAR files
+set JAR_DIR=C:\path\to\your\jars
+
+REM Loop through each JAR file in the directory
+for %%f in ("%JAR_DIR%\*.jar") do (
+    set "JAR_FILE=%%f"
+    set "ARTIFACT_NAME=%%~nf"
+    
+    call mvn deploy:deploy-file ^
+        -Durl=%NEXUS_URL% ^
+        -DrepositoryId=nexus-releases ^
+        -Dfile=!JAR_FILE! ^
+        -DgroupId=%GROUP_ID% ^
+        -DartifactId=!ARTIFACT_NAME! ^
+        -Dversion=%VERSION% ^
+        -Dpackaging=%PACKAGING% ^
+        -Dusername=%USERNAME% ^
+        -Dpassword=%PASSWORD%
+)
+
+endlocal
+pause
+
+
+
+
 private static void sortSheetByColumn(Sheet sheet, int columnIndex) {
         List<Row> rows = new ArrayList<>();
         for (int i = 1; i <= sheet.getLastRowNum(); i++) {
