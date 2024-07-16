@@ -1,3 +1,50 @@
+@echo off
+setlocal
+
+REM Configuration
+set "NEXUS_URL=http://your-nexus-repo/repository/your-repo/"
+set "GROUP_ID=com.example"
+set "VERSION=1.0.0"
+set "REPOSITORY_ID=nexus-repository"
+
+REM Loop through all jar files in the current directory
+for %%F in (*.jar) do (
+    set "JAR=%%F"
+    set "ARTIFACT_ID=%%~nF"
+
+    REM Create a temporary POM file
+    set "POM_FILE=%%~nF-pom.xml"
+    >"%POM_FILE%" (
+        echo ^<project xmlns="http://maven.apache.org/POM/4.0.0"
+        echo        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        echo        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"^>
+        echo    ^<modelVersion^>4.0.0^</modelVersion^>
+        echo    ^<groupId^>%GROUP_ID%^</groupId^>
+        echo    ^<artifactId^>%ARTIFACT_ID%^</artifactId^>
+        echo    ^<version^>%VERSION%^</version^>
+        echo    ^<packaging^>jar^</packaging^>
+        echo ^</project^>
+    )
+
+    REM Deploy the JAR and POM to Nexus
+    mvn deploy:deploy-file ^
+        -DgroupId=%GROUP_ID% ^
+        -DartifactId=%ARTIFACT_ID% ^
+        -Dversion=%VERSION% ^
+        -Dpackaging=jar ^
+        -Dfile="%JAR%" ^
+        -DpomFile="%POM_FILE%" ^
+        -DrepositoryId=%REPOSITORY_ID% ^
+        -Durl=%NEXUS_URL%
+
+    REM Clean up temporary POM file
+    del "%POM_FILE%"
+)
+
+endlocal
+
+
+
 #!/bin/bash
 
 # Configuration
