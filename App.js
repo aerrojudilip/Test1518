@@ -21,7 +21,7 @@ function App() {
     axios
       .post("https://api.example.com/entries", {
         name: newEntry.name,
-        groups: newEntry.groups, // No array handling here
+        groups: newEntry.groups,
         profile: newEntry.profile,
       })
       .then((response) => {
@@ -35,7 +35,7 @@ function App() {
     setIsEditing(true);
     setNewEntry({
       name: entry.name,
-      groups: entry.groups, // Directly use groups as string
+      groups: entry.groups,
       profile: entry.profile,
     });
     setCurrentId(entry.id);
@@ -45,7 +45,7 @@ function App() {
     axios
       .put(`https://api.example.com/entries/${currentId}`, {
         name: newEntry.name,
-        groups: newEntry.groups, // No array conversion needed
+        groups: newEntry.groups,
         profile: newEntry.profile,
       })
       .then((response) => {
@@ -73,16 +73,33 @@ function App() {
   return (
     <div className="App">
       <h1>Entries</h1>
-      <ul>
-        {entries.map((entry) => (
-          <li key={entry.id}>
-            <strong>{entry.name}</strong> (Groups: {entry.groups})<br />
-            {entry.profile}
-            <button onClick={() => handleEditEntry(entry)}>Edit</button>
-            <button onClick={() => handleDeleteEntry(entry.id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
+
+      {/* Table Structure for Displaying Entries */}
+      <table border="1" cellPadding="10" cellSpacing="0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Groups</th>
+            <th>Profile</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map((entry) => (
+            <tr key={entry.id}>
+              <td>{entry.id}</td>
+              <td>{entry.name}</td>
+              <td>{entry.groups}</td>
+              <td>{entry.profile}</td>
+              <td>
+                <button onClick={() => handleEditEntry(entry)}>Edit</button>
+                <button onClick={() => handleDeleteEntry(entry.id)}>Delete</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       <h2>{isEditing ? "Edit Entry" : "Add Entry"}</h2>
       <input
