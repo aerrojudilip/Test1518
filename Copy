@@ -1,526 +1,112 @@
-@echo off
-setlocal
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 
-REM Configuration
-set "NEXUS_URL=http://your-nexus-repo/repository/your-repo/"
-set "GROUP_ID=com.example"
-set "VERSION=1.0.0"
-set "REPOSITORY_ID=nexus-repository"
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.*;
 
-REM Loop through all jar files in the current directory
-for %%F in (*.jar) do (
-    set "JAR=%%F"
-    set "ARTIFACT_ID=%%~nF"
+public class RestApiCallerJava8 {
 
-    REM Create a temporary POM file
-    set "POM_FILE=%%~nF-pom.xml"
-    >"%POM_FILE%" (
-        echo ^<project xmlns="http://maven.apache.org/POM/4.0.0"
-        echo        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        echo        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"^>
-        echo    ^<modelVersion^>4.0.0^</modelVersion^>
-        echo    ^<groupId^>%GROUP_ID%^</groupId^>
-        echo    ^<artifactId^>%ARTIFACT_ID%^</artifactId^>
-        echo    ^<version^>%VERSION%^</version^>
-        echo    ^<packaging^>jar^</packaging^>
-        echo ^</project^>
-    )
+    public static void main(String[] args) {
+        List<String> urls = List.of(
+                "https://jsonplaceholder.typicode.com/posts/1",
+                "https://jsonplaceholder.typicode.com/posts/2",
+                "https://invalid.url"
+        );
 
-    REM Deploy the JAR and POM to Nexus
-    mvn deploy:deploy-file ^
-        -DgroupId=%GROUP_ID% ^
-        -DartifactId=%ARTIFACT_ID% ^
-        -Dversion=%VERSION% ^
-        -Dpackaging=jar ^
-        -Dfile="%JAR%" ^
-        -DpomFile="%POM_FILE%" ^
-        -DrepositoryId=%REPOSITORY_ID% ^
-        -Durl=%NEXUS_URL%
+        // Thread pool with fixed number of threads
+        ExecutorService executorService = Executors.newFixedThreadPool(5);
 
-    REM Clean up temporary POM file
-    del "%POM_FILE%"
-)
+        // Process the API requests
+        ApiResult result = processApiRequests(urls, executorService);
 
-endlocal
+        // Print results
+        System.out.println("Successful Responses: " + result.getSuccessResponses());
+        System.out.println("Failed Requests: " + result.getFailedRequests());
 
-
-
-#!/bin/bash
-
-# Configuration
-NEXUS_URL="http://your-nexus-repo/repository/your-repo/"
-GROUP_ID="com.example"
-VERSION="1.0.0"
-
-# Loop through all jar files in the current directory
-for JAR in *.jar; do
-  ARTIFACT_ID=$(basename "${JAR}" .jar)
-
-  # Create a temporary POM file
-  POM_FILE="${ARTIFACT_ID}-pom.xml"
-  cat > "${POM_FILE}" <<EOL
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>${GROUP_ID}</groupId>
-    <artifactId>${ARTIFACT_ID}</artifactId>
-    <version>${VERSION}</version>
-    <packaging>jar</packaging>
-</project>
-EOL
-
-  # Deploy the JAR and POM to Nexus
-  mvn deploy:deploy-file \
-    -DgroupId="${GROUP_ID}" \
-    -DartifactId="${ARTIFACT_ID}" \
-    -Dversion="${VERSION}" \
-    -Dpackaging=jar \
-    -Dfile="${JAR}" \
-    -DpomFile="${POM_FILE}" \
-    -DrepositoryId=nexus-repository \
-    -Durl="${NEXUS_URL}"
-
-  # Clean up temporary POM file
-  rm "${POM_FILE}"
-done
-
-
-
-@echo off
-setlocal enabledelayedexpansion
-
-REM Define variables
-set NEXUS_URL=http://your-nexus-server/repository/maven-releases/
-set GROUP_ID=com.example
-set VERSION=1.0.0
-set PACKAGING=jar
-set USERNAME=your-username
-set PASSWORD=your-password
-
-REM Path to the directory containing your JAR files
-set JAR_DIR=C:\path\to\your\jars
-
-REM Loop through each JAR file in the directory
-for %%f in ("%JAR_DIR%\*.jar") do (
-    set "JAR_FILE=%%f"
-    set "ARTIFACT_NAME=%%~nf"
-    
-    call mvn deploy:deploy-file ^
-        -Durl=%NEXUS_URL% ^
-        -DrepositoryId=nexus-releases ^
-        -Dfile=!JAR_FILE! ^
-        -DgroupId=%GROUP_ID% ^
-        -DartifactId=!ARTIFACT_NAME! ^
-        -Dversion=%VERSION% ^
-        -Dpackaging=%PACKAGING% ^
-        -Dusername=%USERNAME% ^
-        -Dpassword=%PASSWORD%
-)
-
-endlocal
-pause
-
-
-
-
-private static void sortSheetByColumn(Sheet sheet, int columnIndex) {
-        List<Row> rows = new ArrayList<>();
-        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-            rows.add(sheet.getRow(i));
-        }
-
-        rows.sort(Comparator.comparing(row -> {
-            Cell cell = row.getCell(columnIndex);
-            return cell != null ? cell.toString() : "";
-        }));
-
-        int rowIndex = 1; // Skip the header row
-        for (Row row : rows) {
-            Row newRow = sheet.createRow(rowIndex++);
-            for (int i = 0; i < row.getLastCellNum(); i++) {
-                Cell oldCell = row.getCell(i);
-                Cell newCell = newRow.createCell(i);
-                copyCellValue(oldCell, newCell);
-            }
-        }
+        // Shut down the executor service
+        executorService.shutdown();
     }
 
--- Step 1: Generate a series of week start dates for the past 6 months
-WITH weeks AS (
-    SELECT
-        TRUNC(SYSDATE, 'IW') - (LEVEL - 1) * 7 AS week_start
-    FROM 
-        dual
-    CONNECT BY 
-        LEVEL <= 26
-),
+    public static ApiResult processApiRequests(List<String> urls, ExecutorService executorService) {
+        List<Future<ApiResponse>> futures = new ArrayList<>();
+        List<String> successResponses = Collections.synchronizedList(new ArrayList<>());
+        List<String> failedRequests = Collections.synchronizedList(new ArrayList<>());
 
--- Step 2: Aggregate login counts per user per week
-logins AS (
-    SELECT 
-        user_id,
-        TRUNC(login_time, 'IW') AS week_start,
-        COUNT(*) AS login_count
-    FROM 
-        user_logins
-    WHERE 
-        login_time >= ADD_MONTHS(SYSDATE, -6)
-        AND login_time < SYSDATE
-    GROUP BY 
-        user_id, TRUNC(login_time, 'IW')
-)
-
--- Step 3: Combine the weeks and logins data, ensuring all weeks are included
-SELECT
-    w.week_start,
-    l.user_id,
-    NVL(l.login_count, 0) AS login_count
-FROM 
-    weeks w
-LEFT JOIN 
-    logins l
-ON 
-    w.week_start = l.week_start
-ORDER BY 
-    w.week_start,
-    l.user_id;
-
-
-
-
-
--- Step 1: Generate a series of week start dates for the past 6 months
-WITH weeks AS (
-    SELECT
-        generate_series(
-            date_trunc('week', NOW() - INTERVAL '6 months'),  -- Start date: beginning of the week, 6 months ago
-            date_trunc('week', NOW()),                        -- End date: beginning of the current week
-            '1 week'::interval                                -- Interval: 1 week
-        ) AS week_start                                       -- Alias for the generated dates
-),
-
--- Step 2: Aggregate login counts per user per week
-logins AS (
-    SELECT 
-        user_id,
-        date_trunc('week', login_time) AS week_start,        -- Truncate login_time to the start of the week
-        COUNT(*) AS login_count                              -- Count the number of logins per user per week
-    FROM 
-        user_logins
-    WHERE 
-        login_time >= NOW() - INTERVAL '6 months'            -- Filter logins to the past 6 months
-        AND login_time < NOW()                               -- Ensure logins are up to the current time
-    GROUP BY 
-        user_id, week_start                                  -- Group by user and week start
-)
-
--- Step 3: Combine the weeks and logins data, ensuring all weeks are included
-SELECT
-    w.week_start,                                            -- Select week start date
-    l.user_id,                                               -- Select user ID
-    COALESCE(l.login_count, 0) AS login_count                -- Ensure login count is 0 if no logins for that week
-FROM 
-    weeks w
-LEFT JOIN 
-    logins l
-ON 
-    w.week_start = l.week_start                              -- Join on week start date
-ORDER BY 
-    w.week_start,                                            -- Order by week start
-    l.user_id;                                               -- Then by user ID
-----------------------------------------------------------------------------------------------------------------------------
-
-WITH WeeklyLogins AS (
-  SELECT 
-    u.username,  -- Replace 'username' with the actual username column name
-    DATE_TRUNC('week', ul.login_time) AS login_week,  -- Truncate to week
-    COUNT(*) AS login_count
-  FROM user_logins ul
-  INNER JOIN users u ON ul.user_id = u.id
-  GROUP BY u.username, DATE_TRUNC('week', ul.login_time)
-)
-SELECT *
-FROM WeeklyLogins
-WHERE login_week >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)  -- Filter last 6 months
-ORDER BY username, login_week ASC;  -- Order by username and login week
---------------------------------------------------------------------------------------------------------------------------------
-
-LoadModule rewrite_module modules/mod_rewrite.so
-LoadModule headers_module modules/mod_headers.so
-
-LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" \"%{Authorization}i\"" export_log
-CustomLog "/path/to/your/export_log_file.log" export_log env=export_url
-
-RewriteEngine On
-RewriteCond %{REQUEST_URI} /export [NC]
-RewriteRule .* - [E=export_url:1]
-
-Header add export_url "%{export_url}e"
-
-
-# Define a custom log format
-LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" export_log_format
-
-# Set environment variable for requests containing "export"
-SetEnvIf Request_URI "export" export_request
-
-# Log requests containing "export" to a separate file
-CustomLog logs/export_requests.log export_log_format env=export_request
-
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.*;
-
-public class ExcelComparator {
-
-    public static void main(String[] args) throws IOException {
-        String file1Path = "path_to_first_excel_file.xlsx";
-        String file2Path = "path_to_second_excel_file.xlsx";
-        String resultPath = "path_to_result_excel_file.xlsx";
-
-        Workbook workbook1 = new XSSFWorkbook(new FileInputStream(file1Path));
-        Workbook workbook2 = new XSSFWorkbook(new FileInputStream(file2Path));
-        Workbook resultWorkbook = new XSSFWorkbook();
-
-        compareExcelFiles(workbook1, workbook2, resultWorkbook);
-
-        try (FileOutputStream fileOut = new FileOutputStream(resultPath)) {
-            resultWorkbook.write(fileOut);
-        }
-
-        workbook1.close();
-        workbook2.close();
-        resultWorkbook.close();
-    }
-
-    private static void compareExcelFiles(Workbook workbook1, Workbook workbook2, Workbook resultWorkbook) {
-        Sheet sheet1 = workbook1.getSheetAt(0);
-        Sheet sheet2 = workbook2.getSheetAt(0);
-        Sheet resultSheet = resultWorkbook.createSheet("Differences");
-
-        // Read content into maps for comparison
-        Map<Integer, List<String>> file1Content = readSheetContent(sheet1);
-        Map<Integer, List<String>> file2Content = readSheetContent(sheet2);
-
-        int rowCount = 0;
-        // Compare and find added/modified rows
-        for (Map.Entry<Integer, List<String>> entry : file2Content.entrySet()) {
-            int rowNum = entry.getKey();
-            List<String> row = entry.getValue();
-            if (!file1Content.containsKey(rowNum) || !file1Content.get(rowNum).equals(row)) {
-                Row resultRow = resultSheet.createRow(rowCount++);
-                for (int i = 0; i < row.size(); i++) {
-                    Cell cell = resultRow.createCell(i);
-                    cell.setCellValue(row.get(i));
-                }
-            }
-        }
-    }
-
-    private static Map<Integer, List<String>> readSheetContent(Sheet sheet) {
-        Map<Integer, List<String>> content = new HashMap<>();
-        for (Row row : sheet) {
-            List<String> rowContent = new ArrayList<>();
-            for (Cell cell : row) {
-                rowContent.add(cell.toString());
-            }
-            content.put(row.getRowNum(), rowContent);
-        }
-        return content;
-    }
-}
-private static void copySecondSheet(Workbook sourceWorkbook, Workbook targetWorkbook) {
-        Sheet secondSheet = sourceWorkbook.getSheetAt(1); // Assuming the second sheet index is 1
-        Sheet newSheet = targetWorkbook.createSheet(secondSheet.getSheetName());
-
-        for (int i = 0; i <= secondSheet.getLastRowNum(); i++) {
-            Row sourceRow = secondSheet.getRow(i);
-            Row targetRow = newSheet.createRow(i);
-
-            if (sourceRow != null) {
-                for (int j = 0; j < sourceRow.getLastCellNum(); j++) {
-                    Cell sourceCell = sourceRow.getCell(j);
-                    Cell targetCell = targetRow.createCell(j);
-
-                    if (sourceCell != null) {
-                        switch (sourceCell.getCellType()) {
-                            case STRING:
-                                targetCell.setCellValue(sourceCell.getStringCellValue());
-                                break;
-                            case NUMERIC:
-                                targetCell.setCellValue(sourceCell.getNumericCellValue());
-                                break;
-                            case BOOLEAN:
-                                targetCell.setCellValue(sourceCell.getBooleanCellValue());
-                                break;
-                            case FORMULA:
-                                targetCell.setCellFormula(sourceCell.getCellFormula());
-                                break;
-                            case BLANK:
-                                targetCell.setCellType(CellType.BLANK);
-                                break;
-                            default:
-                                break;
-                        }
+        for (String url : urls) {
+            futures.add(executorService.submit(() -> {
+                try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+                    HttpGet request = new HttpGet(url);
+                    try (CloseableHttpResponse response = httpClient.execute(request)) {
+                        String responseBody = EntityUtils.toString(response.getEntity());
+                        return new ApiResponse(url, responseBody, null);
                     }
+                } catch (Exception e) {
+                    return new ApiResponse(url, null, e.getMessage());
                 }
-            }
+            }));
         }
 
-
-
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.*;
-
-public class ExcelComparator {
-
-    public static void main(String[] args) throws IOException {
-        String file1Path = "path_to_first_excel_file.xlsx";
-        String file2Path = "path_to_second_excel_file.xlsx";
-        String resultPath = "path_to_result_excel_file.xlsx";
-
-        Workbook workbook1 = new XSSFWorkbook(new FileInputStream(file1Path));
-        Workbook workbook2 = new XSSFWorkbook(new FileInputStream(file2Path));
-        Workbook resultWorkbook = new XSSFWorkbook();
-
-        compareExcelFiles(workbook1, workbook2, resultWorkbook);
-        copySecondSheet(workbook2, resultWorkbook);
-        copyFirstRowFromFirstSheet(workbook2, resultWorkbook);
-
-        try (FileOutputStream fileOut = new FileOutputStream(resultPath)) {
-            resultWorkbook.write(fileOut);
-        }
-
-        workbook1.close();
-        workbook2.close();
-        resultWorkbook.close();
-    }
-
-    private static void compareExcelFiles(Workbook workbook1, Workbook workbook2, Workbook resultWorkbook) {
-        Sheet sheet1 = workbook1.getSheetAt(0);
-        Sheet sheet2 = workbook2.getSheetAt(0);
-        Sheet resultSheet = resultWorkbook.createSheet("Differences");
-
-        // Read content into maps for comparison
-        Map<Integer, List<String>> file1Content = readSheetContent(sheet1);
-        Map<Integer, List<String>> file2Content = readSheetContent(sheet2);
-
-        int rowCount = 0;
-        // Compare and find added/modified rows
-        for (Map.Entry<Integer, List<String>> entry : file2Content.entrySet()) {
-            int rowNum = entry.getKey();
-            List<String> row = entry.getValue();
-            if (!file1Content.containsKey(rowNum) || !file1Content.get(rowNum).equals(row)) {
-                Row resultRow = resultSheet.createRow(rowCount++);
-                for (int i = 0; i < row.size(); i++) {
-                    Cell cell = resultRow.createCell(i);
-                    cell.setCellValue(row.get(i));
+        for (Future<ApiResponse> future : futures) {
+            try {
+                ApiResponse apiResponse = future.get();
+                if (apiResponse.getError() == null) {
+                    successResponses.add(apiResponse.getResponse());
+                } else {
+                    failedRequests.add(apiResponse.getRequestUrl());
                 }
+            } catch (InterruptedException | ExecutionException e) {
+                // Handle exception
+                e.printStackTrace();
             }
         }
+
+        return new ApiResult(successResponses, failedRequests);
     }
 
-    private static Map<Integer, List<String>> readSheetContent(Sheet sheet) {
-        Map<Integer, List<String>> content = new HashMap<>();
-        for (Row row : sheet) {
-            List<String> rowContent = new ArrayList<>();
-            for (Cell cell : row) {
-                rowContent.add(getCellValue(cell));
-            }
-            content.put(row.getRowNum(), rowContent);
-        }
-        return content;
-    }
+    static class ApiResponse {
+        private final String requestUrl;
+        private final String response;
+        private final String error;
 
-    private static String getCellValue(Cell cell) {
-        if (cell == null) {
-            return "";
+        public ApiResponse(String requestUrl, String response, String error) {
+            this.requestUrl = requestUrl;
+            this.response = response;
+            this.error = error;
         }
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue();
-            case NUMERIC:
-                return String.valueOf(cell.getNumericCellValue());
-            case BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue());
-            case FORMULA:
-                return cell.getCellFormula();
-            case BLANK:
-                return "";
-            default:
-                return "Unknown Cell Type";
+
+        public String getRequestUrl() {
+            return requestUrl;
+        }
+
+        public String getResponse() {
+            return response;
+        }
+
+        public String getError() {
+            return error;
         }
     }
 
-    private static void copyCellValue(Cell sourceCell, Cell targetCell) {
-        if (sourceCell == null || targetCell == null) {
-            return;
+    static class ApiResult {
+        private final List<String> successResponses;
+        private final List<String> failedRequests;
+
+        public ApiResult(List<String> successResponses, List<String> failedRequests) {
+            this.successResponses = successResponses;
+            this.failedRequests = failedRequests;
         }
-        switch (sourceCell.getCellType()) {
-            case STRING:
-                targetCell.setCellValue(sourceCell.getStringCellValue());
-                break;
-            case NUMERIC:
-                targetCell.setCellValue(sourceCell.getNumericCellValue());
-                break;
-            case BOOLEAN:
-                targetCell.setCellValue(sourceCell.getBooleanCellValue());
-                break;
-            case FORMULA:
-                targetCell.setCellFormula(sourceCell.getCellFormula());
-                break;
-            case BLANK:
-                targetCell.setBlank();
-                break;
-            default:
-                break;
+
+        public List<String> getSuccessResponses() {
+            return successResponses;
         }
-    }
 
-    private static void copySecondSheet(Workbook sourceWorkbook, Workbook targetWorkbook) {
-        Sheet secondSheet = sourceWorkbook.getSheetAt(1); // Assuming the second sheet index is 1
-        Sheet newSheet = targetWorkbook.createSheet(secondSheet.getSheetName());
-
-        for (int i = 0; i <= secondSheet.getLastRowNum(); i++) {
-            Row sourceRow = secondSheet.getRow(i);
-            Row targetRow = newSheet.createRow(i);
-
-            if (sourceRow != null) {
-                for (int j = 0; j < sourceRow.getLastCellNum(); j++) {
-                    Cell sourceCell = sourceRow.getCell(j);
-                    Cell targetCell = targetRow.createCell(j);
-
-                    copyCellValue(sourceCell, targetCell);
-                }
-            }
-        }
-    }
-
-    private static void copyFirstRowFromFirstSheet(Workbook sourceWorkbook, Workbook targetWorkbook) {
-        Sheet sourceSheet = sourceWorkbook.getSheetAt(0); // First sheet
-        Sheet targetSheet = targetWorkbook.createSheet("FirstRow");
-
-        Row sourceRow = sourceSheet.getRow(0); // First row
-        if (sourceRow != null) {
-            Row targetRow = targetSheet.createRow(0);
-
-            for (int j = 0; j < sourceRow.getLastCellNum(); j++) {
-                Cell sourceCell = sourceRow.getCell(j);
-                Cell targetCell = targetRow.createCell(j);
-
-                copyCellValue(sourceCell, targetCell);
-            }
+        public List<String> getFailedRequests() {
+            return failedRequests;
         }
     }
 }
-
