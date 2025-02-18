@@ -1,112 +1,23 @@
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.*;
-
-public class RestApiCallerJava8 {
-
-    public static void main(String[] args) {
-        List<String> urls = List.of(
-                "https://jsonplaceholder.typicode.com/posts/1",
-                "https://jsonplaceholder.typicode.com/posts/2",
-                "https://invalid.url"
-        );
-
-        // Thread pool with fixed number of threads
-        ExecutorService executorService = Executors.newFixedThreadPool(5);
-
-        // Process the API requests
-        ApiResult result = processApiRequests(urls, executorService);
-
-        // Print results
-        System.out.println("Successful Responses: " + result.getSuccessResponses());
-        System.out.println("Failed Requests: " + result.getFailedRequests());
-
-        // Shut down the executor service
-        executorService.shutdown();
-    }
-
-    public static ApiResult processApiRequests(List<String> urls, ExecutorService executorService) {
-        List<Future<ApiResponse>> futures = new ArrayList<>();
-        List<String> successResponses = Collections.synchronizedList(new ArrayList<>());
-        List<String> failedRequests = Collections.synchronizedList(new ArrayList<>());
-
-        for (String url : urls) {
-            futures.add(executorService.submit(() -> {
-                try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-                    HttpGet request = new HttpGet(url);
-                    try (CloseableHttpResponse response = httpClient.execute(request)) {
-                        String responseBody = EntityUtils.toString(response.getEntity());
-                        return new ApiResponse(url, responseBody, null);
-                    }
-                } catch (Exception e) {
-                    return new ApiResponse(url, null, e.getMessage());
-                }
-            }));
-        }
-
-        for (Future<ApiResponse> future : futures) {
-            try {
-                ApiResponse apiResponse = future.get();
-                if (apiResponse.getError() == null) {
-                    successResponses.add(apiResponse.getResponse());
-                } else {
-                    failedRequests.add(apiResponse.getRequestUrl());
-                }
-            } catch (InterruptedException | ExecutionException e) {
-                // Handle exception
-                e.printStackTrace();
-            }
-        }
-
-        return new ApiResult(successResponses, failedRequests);
-    }
-
-    static class ApiResponse {
-        private final String requestUrl;
-        private final String response;
-        private final String error;
-
-        public ApiResponse(String requestUrl, String response, String error) {
-            this.requestUrl = requestUrl;
-            this.response = response;
-            this.error = error;
-        }
-
-        public String getRequestUrl() {
-            return requestUrl;
-        }
-
-        public String getResponse() {
-            return response;
-        }
-
-        public String getError() {
-            return error;
-        }
-    }
-
-    static class ApiResult {
-        private final List<String> successResponses;
-        private final List<String> failedRequests;
-
-        public ApiResult(List<String> successResponses, List<String> failedRequests) {
-            this.successResponses = successResponses;
-            this.failedRequests = failedRequests;
-        }
-
-        public List<String> getSuccessResponses() {
-            return successResponses;
-        }
-
-        public List<String> getFailedRequests() {
-            return failedRequests;
-        }
-    }
-}
+<START:who> The risk management team <END> identified <START:what> a critical compliance gap <END> in <START:where> the internal audit report <END> on <START:when> March 10th <END> because <START:why> the organization lacked proper controls <END>.
+<START:who> The IT security department <END> detected <START:what> a data breach <END> in <START:where> the corporate network <END> on <START:when> January 15th <END> due to <START:why> inadequate encryption protocols <END>.
+<START:who> The compliance officer <END> issued <START:what> a policy update <END> for <START:where> financial reporting <END> on <START:when> April 5th <END> to <START:why> align with regulatory changes <END>.
+<START:who> The internal audit team <END> reviewed <START:what> fraud prevention measures <END> at <START:where> the headquarters <END> during <START:when> Q2 2024 <END> to <START:why> mitigate financial risks <END>.
+<START:who> The CFO <END> mandated <START:what> a risk assessment <END> for <START:where> third-party vendors <END> on <START:when> February 20th <END> due to <START:why> increased supply chain vulnerabilities <END>.
+<START:what> A policy violation <END> was discovered by <START:who> the compliance team <END> in <START:where> the European branch <END> during <START:when> October 2024 <END> after <START:why> an anonymous tip <END>.
+<START:what> An internal audit report <END> highlighted <START:why> inadequate financial controls <END> at <START:where> the North America division <END> on <START:when> March 30th <END>.
+<START:what> A regulatory fine <END> was issued to <START:who> the banking institution <END> on <START:when> July 1st <END> because <START:why> anti-money laundering protocols were not followed <END>.
+<START:what> New cybersecurity guidelines <END> were implemented by <START:who> the IT governance board <END> in <START:where> the corporate headquarters <END> to <START:why> protect against ransomware attacks <END>.
+<START:what> A conflict of interest <END> was reported by <START:who> an anonymous whistleblower <END> regarding <START:where> procurement contracts <END> in <START:when> Q3 2024 <END>.
+<START:where> The finance department <END> initiated <START:what> an internal review <END> after <START:why> suspected financial discrepancies <END> on <START:when> June 25th <END>.
+<START:where> The European branch <END> faced <START:what> a major compliance violation <END> due to <START:why> improper data handling practices <END> in <START:when> August 2024 <END>.
+<START:where> The third-party vendor contracts <END> were audited by <START:who> the procurement compliance team <END> to <START:why> assess risk exposure <END>.
+<START:where> The corporate data center <END> suffered <START:what> a security breach <END> on <START:when> May 15th <END> due to <START:why> weak access controls <END>.
+<START:when> On February 10th <END>, <START:who> the legal team <END> identified <START:what> potential regulatory violations <END> in <START:where> cross-border transactions <END>.
+<START:when> During the annual compliance review <END>, <START:who> the internal auditors <END> found <START:what> material weaknesses <END> in <START:where> financial disclosures <END>.
+<START:when> In September 2024 <END>, <START:who> the ethics committee <END> launched <START:what> an investigation <END> regarding <START:where> workplace misconduct <END> after <START:why> receiving multiple complaints <END>.
+<START:when> At the beginning of Q4 2023 <END>, <START:what> new risk controls <END> were introduced by <START:who> the governance committee <END> to <START:why> address operational risks <END>.
+<START:why> Due to rising fraud cases <END>, <START:who> the financial regulatory board <END> enforced <START:what> stricter audit procedures <END> for <START:where> banking institutions <END> on <START:when> October 1st <END>.
+<START:why> To comply with GDPR <END>, <START:who> the data privacy officer <END> revised <START:what> data retention policies <END> in <START:when> June 2024 <END>.
+<START:why> After multiple customer complaints <END>, <START:who> the compliance department <END> assessed <START:what> ethical violations <END> in <START:where> the customer service operations <END>.
+<START:why> To mitigate financial risks <END>, <START:who> the audit committee <END> increased <START:what> scrutiny on financial statements <END> starting <START:when> Q3 2024 <END>.
+<START:why> In response to regulatory pressure <END>, <START:who> the board of directors <END> approved <START:what> a new governance framework <END> on <START:when> July 15th <END>.
