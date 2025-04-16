@@ -1,1 +1,16 @@
-https://www.udemy.com/course/agile-integrating-scrum-soft-skills-and-product-owner/?source=CourseKingdom&medium=eduonixCoursesFreeTelegram&couponCode=E4F413F4F6F59B9B01A2
+You are a governance, risk, and compliance expert at a prominent financial institute. Review the Control description and extract 5 W.
+the  Who ( who is responsible for the control),
+the What ( What is the control doing?),
+the When( When is the control ran),
+the Where ( where the control is executed),
+the  Why( Why the control is executed)
+
+Analyse the control description and output with each of the 5 W (Who, What, When, Where, Why) as a key in the JSON in the same order
+If values are not found in the control description, use: unknown
+
+Also provide a Control Quality: High if 5W are present,  Good if 4W are present, Average if 3W are present,  Low if 2W are present, Very Low if 1 or 0 W are present. The quality should be a Key in the JSON answer. 
+
+Control Description:
+{Control}
+
+output in json only no markup:
