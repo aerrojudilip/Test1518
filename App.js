@@ -1,131 +1,72 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import javax.net.ssl.*;
+import java.io.*;
+import java.net.*;
+import java.util.*;
 
-function App() {
-  const [entries, setEntries] = useState([]);
-  const [newEntry, setNewEntry] = useState({ name: "", groups: "", profile: "" });
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentId, setCurrentId] = useState(null);
+public class SimpleHttpsProxy {
 
-  useEffect(() => {
-    // Fetch data from REST API
-    axios
-      .get("https://api.example.com/entries")
-      .then((response) => {
-        setEntries(response.data);
-      })
-      .catch((error) => console.log(error));
-  }, []);
+    public static void main(String[] args) throws Exception {
+        int localPort = 8888; // Proxy listens on this port
+        ServerSocket serverSocket = new ServerSocket(localPort);
+        System.out.println("HTTPS Proxy started on port " + localPort);
 
-  const handleAddEntry = () => {
-    axios
-      .post("https://api.example.com/entries", {
-        name: newEntry.name,
-        groups: newEntry.groups,
-        profile: newEntry.profile,
-      })
-      .then((response) => {
-        setEntries([...entries, response.data]);
-        setNewEntry({ name: "", groups: "", profile: "" });
-      })
-      .catch((error) => console.log(error));
-  };
+        while (true) {
+            Socket clientSocket = serverSocket.accept();
+            new Thread(() -> handleClient(clientSocket)).start();
+        }
+    }
 
-  const handleEditEntry = (entry) => {
-    setIsEditing(true);
-    setNewEntry({
-      name: entry.name,
-      groups: entry.groups,
-      profile: entry.profile,
-    });
-    setCurrentId(entry.id);
-  };
+    private static void handleClient(Socket clientSocket) {
+        try (
+            InputStream clientIn = clientSocket.getInputStream();
+            OutputStream clientOut = clientSocket.getOutputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(clientIn));
+        ) {
+            String requestLine = reader.readLine();
+            if (requestLine == null || !requestLine.startsWith("CONNECT")) {
+                clientSocket.close();
+                return;
+            }
 
-  const handleUpdateEntry = () => {
-    axios
-      .put(`https://api.example.com/entries/${currentId}`, {
-        name: newEntry.name,
-        groups: newEntry.groups,
-        profile: newEntry.profile,
-      })
-      .then((response) => {
-        setEntries(
-          entries.map((entry) =>
-            entry.id === currentId ? response.data : entry
-          )
-        );
-        setIsEditing(false);
-        setNewEntry({ name: "", groups: "", profile: "" });
-        setCurrentId(null);
-      })
-      .catch((error) => console.log(error));
-  };
+            // Example: CONNECT www.google.com:443 HTTP/1.1
+            String[] parts = requestLine.split(" ");
+            String[] hostPort = parts[1].split(":");
+            String host = hostPort[0];
+            int port = Integer.parseInt(hostPort[1]);
 
-  const handleDeleteEntry = (id) => {
-    axios
-      .delete(`https://api.example.com/entries/${id}`)
-      .then(() => {
-        setEntries(entries.filter((entry) => entry.id !== id));
-      })
-      .catch((error) => console.log(error));
-  };
+            System.out.println("Connecting to " + host + ":" + port);
 
-  return (
-    <div className="App">
-      <h1>Entries</h1>
+            // Respond OK to initiate TLS handshake with client
+            clientOut.write("HTTP/1.1 200 Connection established\r\n\r\n".getBytes());
+            clientOut.flush();
 
-      {/* Table Structure for Displaying Entries */}
-      <table border="1" cellPadding="10" cellSpacing="0">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Groups</th>
-            <th>Profile</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry) => (
-            <tr key={entry.id}>
-              <td>{entry.id}</td>
-              <td>{entry.name}</td>
-              <td>{entry.groups}</td>
-              <td>{entry.profile}</td>
-              <td>
-                <button onClick={() => handleEditEntry(entry)}>Edit</button>
-                <button onClick={() => handleDeleteEntry(entry.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            // Upgrade client socket to SSL
+            SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+            SSLSocket serverSocket = (SSLSocket) factory.createSocket(host, port);
+            serverSocket.startHandshake();
 
-      <h2>{isEditing ? "Edit Entry" : "Add Entry"}</h2>
-      <input
-        type="text"
-        placeholder="Name"
-        value={newEntry.name}
-        onChange={(e) => setNewEntry({ ...newEntry, name: e.target.value })}
-      />
-      <input
-        type="text"
-        placeholder="Groups"
-        value={newEntry.groups}
-        onChange={(e) => setNewEntry({ ...newEntry, groups: e.target.value })}
-      />
-      <textarea
-        placeholder="Profile"
-        value={newEntry.profile}
-        onChange={(e) => setNewEntry({ ...newEntry, profile: e.target.value })}
-      />
-      {isEditing ? (
-        <button onClick={handleUpdateEntry}>Update Entry</button>
-      ) : (
-        <button onClick={handleAddEntry}>Add Entry</button>
-      )}
-    </div>
-  );
+            // Tunnel data between client and server
+            InputStream serverIn = serverSocket.getInputStream();
+            OutputStream serverOut = serverSocket.getOutputStream();
+
+            // Start data piping in both directions
+            new Thread(() -> pipe(clientIn, serverOut)).start();
+            pipe(serverIn, clientOut); // Main thread handles server-to-client
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void pipe(InputStream in, OutputStream out) {
+        try {
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = in.read(buffer)) != -1) {
+                out.write(buffer, 0, count);
+                out.flush();
+            }
+        } catch (IOException e) {
+            // Connection closed
+        }
+    }
 }
-
-export default App;
