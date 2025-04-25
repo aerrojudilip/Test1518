@@ -4,6 +4,13 @@ pom.xml
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+         <groupId>org.springframework.boot</groupId>
+         <artifactid>spring-boot-started-parent</artifactid>
+         <version>2.3.5.RELEsE</version>
+    <parent>
+
+    </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.example</groupId>
     <artifactId>reverse-proxy</artifactId>
