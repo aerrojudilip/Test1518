@@ -1,0 +1,171 @@
+pom.xml
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>reverse-proxy</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <spring-boot.version>2.7.18</spring-boot.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring-boot.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+
+application.properties
+proxy.target=https://localhost:8443
+server.port=8080
+
+
+ReverseProxyApplication.java
+package com.example.reverseproxy;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class ReverseProxyApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ReverseProxyApplication.class, args);
+    }
+}
+
+HttpClientConfig.java
+package com.example.reverseproxy;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class HttpClientConfig {
+
+    @Bean
+    public HttpClient relaxedHttpClient() throws Exception {
+        return HttpClients.custom()
+                .setSSLContext(new SSLContextBuilder()
+                        .loadTrustMaterial(null, new TrustSelfSignedStrategy())
+                        .build())
+                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                .build();
+    }
+}
+
+
+ProxyController.java
+package com.example.reverseproxy;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.*;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.util.EntityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.Enumeration;
+
+@RestController
+public class ProxyController {
+
+    @Value("${proxy.target}")
+    private String targetBaseUrl;
+
+    @Autowired
+    private HttpClient httpClient;
+
+    @RequestMapping("/**")
+    public ResponseEntity<byte[]> proxy(HttpServletRequest request,
+                                        @RequestBody(required = false) byte[] body) throws IOException {
+
+        String targetUrl = targetBaseUrl + request.getRequestURI() +
+                (request.getQueryString() != null ? "?" + request.getQueryString() : "");
+
+        HttpRequestBase forwardRequest;
+
+        switch (request.getMethod()) {
+            case "GET":
+                forwardRequest = new HttpGet(targetUrl);
+                break;
+            case "POST":
+                HttpPost post = new HttpPost(targetUrl);
+                if (body != null) post.setEntity(new ByteArrayEntity(body));
+                forwardRequest = post;
+                break;
+            case "PUT":
+                HttpPut put = new HttpPut(targetUrl);
+                if (body != null) put.setEntity(new ByteArrayEntity(body));
+                forwardRequest = put;
+                break;
+            case "DELETE":
+                forwardRequest = new HttpDelete(targetUrl);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported method: " + request.getMethod());
+        }
+
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String name = headerNames.nextElement();
+            if (!name.equalsIgnoreCase("host")) {
+                forwardRequest.setHeader(name, request.getHeader(name));
+            }
+        }
+
+        HttpResponse response = httpClient.execute(forwardRequest);
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        for (org.apache.http.Header header : response.getAllHeaders()) {
+            responseHeaders.add(header.getName(), header.getValue());
+        }
+
+        HttpEntity entity = response.getEntity();
+        byte[] responseBody = entity != null ? EntityUtils.toByteArray(entity) : new byte[0];
+
+        return ResponseEntity
+                .status(response.getStatusLine().getStatusCode())
+                .headers(responseHeaders)
+                .body(responseBody);
+    }
+}
+
+mvn spring-boot:run
+
