@@ -199,3 +199,11 @@ jasypt.encryptor.password=yourDecryptionKey  # Use ENV VAR in prod
         <welcome-file>login.jsp</welcome-file>
     </welcome-file-list>
 </web-app>
+
+
+java -cp jasypt-1.9.3.jar org.jasypt.intf.cli.JasyptPBEStringEncryptionCLI \
+  input="yourLdapPassword" \
+  password="encryptionKey" \
+  algorithm="PBEWithMD5AndDES"
+
+java -Djasypt.encryptor.password=encryptionKey -jar app.jar
