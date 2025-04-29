@@ -1,0 +1,201 @@
+project-root/
+├── pom.xml
+├── src/
+│   └── main/
+│       ├── java/
+│       │   └── com/example/ldap/
+│       │       ├── LdapLoginApplication.java
+│       │       └── config/
+│       │           └── WebSecurityConfig.java
+│       └── resources/
+│       │   └── application.properties
+│       └── webapp/
+│           └── WEB-INF/
+│               ├── jsp/
+│               │   ├── login.jsp
+│               │   └── dashboard.jsp
+│               └── web.xml
+
+// pom.xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.7.18</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.example</groupId>
+  <artifactId>spring-boot-ldap-jsp</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>war</packaging>
+
+  <properties>
+    <java.version>1.8</java.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.ulisesbocchio</groupId>
+      <artifactId>jasypt-spring-boot-starter</artifactId>
+      <version>3.0.4</version>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jstl</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.tomcat.embed</groupId>
+      <artifactId>tomcat-embed-jasper</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
+
+// LdapLoginApplication.java
+package com.example.ldap;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class LdapLoginApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(LdapLoginApplication.class, args);
+    }
+}
+
+// WebSecurityConfig.java
+package com.example.ldap.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.*;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+@Configuration
+@EnableWebSecurity
+public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Value("${spring.ldap.urls}")
+    private String ldapUrl;
+
+    @Value("${spring.ldap.base}")
+    private String ldapBase;
+
+    @Value("${ldap.userDnPattern}")
+    private String userDnPattern;
+
+    @Value("${ldap.groupSearchBase}")
+    private String groupSearchBase;
+
+    @Value("${ldap.passwordAttribute}")
+    private String passwordAttribute;
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .authorizeRequests()
+                .antMatchers("/login.jsp").permitAll()
+                .anyRequest().authenticated()
+                .and()
+            .formLogin()
+                .loginPage("/login.jsp")
+                .defaultSuccessUrl("/dashboard.jsp", true)
+                .permitAll()
+                .and()
+            .logout()
+                .permitAll();
+    }
+
+    @Override
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth
+            .ldapAuthentication()
+                .userDnPatterns(userDnPattern)
+                .groupSearchBase(groupSearchBase)
+                .contextSource()
+                    .url(ldapUrl + "/" + ldapBase)
+                .and()
+                .passwordCompare()
+                    .passwordEncoder(new BCryptPasswordEncoder())
+                    .passwordAttribute(passwordAttribute);
+    }
+}
+
+// application.properties
+spring.ldap.urls=ldap://localhost:8389
+spring.ldap.base=dc=springframework,dc=org
+ldap.userDnPattern=uid={0},ou=people
+ldap.groupSearchBase=ou=groups
+ldap.passwordAttribute=userPassword
+ldap.manager.password=ENC(3+2O9XGyw+DfdsfsADFSDFJlk3=)
+jasypt.encryptor.password=yourDecryptionKey  # Use ENV VAR in prod
+
+// login.jsp
+<%@ page contentType="text/html;charset=UTF-8" %>
+<html>
+<head>
+  <title>Login</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <h2>Login</h2>
+  <form method="post" action="/login">
+    <label>Username: <input type="text" name="username"/></label><br/>
+    <label>Password: <input type="password" name="password"/></label><br/>
+    <button type="submit">Login</button>
+  </form>
+</body>
+</html>
+
+// dashboard.jsp
+<%@ page contentType="text/html;charset=UTF-8" %>
+<html>
+<head>
+  <title>Dashboard</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <h1>Welcome to the Dashboard!</h1>
+  <form action="/logout" method="post">
+    <input type="submit" value="Logout"/>
+  </form>
+</body>
+</html>
+
+// web.xml
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee" version="3.1">
+    <welcome-file-list>
+        <welcome-file>login.jsp</welcome-file>
+    </welcome-file-list>
+</web-app>
