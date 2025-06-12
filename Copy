@@ -1,22 +1,54 @@
-You are a governance, risk, and compliance expert at a prominent financial institute. Review the Control description and extract 5 W.
-the  Who ( who is responsible for the control),
-the What ( What is the control doing?),
-the When( When is the control ran),
-the Where ( where the control is executed),
-the  Why( Why the control is executed)
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.*;
+import org.jsoup.select.*;
 
-Analyse the control description and output with each of the 5 W (Who, What, When, Where, Why) as a key in the JSON in the same order
-If values are not found in the control description, use: unknown
+public class RichTextSimplifier {
 
-Also provide a Control Quality: High if 5W are present,  Good if 4W are present, Average if 3W are present,  Low if 2W are present, Very Low if 1 or 0 W are present. The quality should be a Key in the JSON answer. 
+    // Convert HTML to plain text with new lines and simple lists
+    public static String convertHtmlToSimpleText(String html) {
+        Document doc = Jsoup.parse(html);
+        return extractSimpleText(doc.body()).trim();
+    }
 
-Control Description:
-{Control}
+    // Recursive function to extract only line breaks and list items
+    private static String extractSimpleText(Node node) {
+        StringBuilder sb = new StringBuilder();
 
-output in json only no markup:
+        for (Node child : node.childNodes()) {
+            if (child instanceof TextNode) {
+                sb.append(((TextNode) child).text());
+            } else if (child instanceof Element) {
+                Element el = (Element) child;
+                String tag = el.tagName();
 
+                switch (tag) {
+                    case "br":
+                        sb.append("\n");
+                        break;
+                    case "p":
+                    case "div":
+                        sb.append(extractSimpleText(el)).append("\n");
+                        break;
+                    case "li":
+                        sb.append("- ").append(extractSimpleText(el)).append("\n");
+                        break;
+                    case "ul":
+                    case "ol":
+                        sb.append(extractSimpleText(el));
+                        break;
+                    default:
+                        sb.append(extractSimpleText(el));
+                        break;
+                }
+            }
+        }
 
+        return sb.toString();
+    }
 
-
-480lsUWHSPBlFJ0SvZ0EkPeXceJdOin54fwp3cuAntJg
-https://us-south.ml.cloud.ibm.com/ml/v4
+    public static void main(String[] args) {
+        String html = "<p>Hello <b>World</b></p><ul><li>One</li><li>Two</li></ul><div>Another line<br>Next line</div>";
+        String plain = convertHtmlToSimpleText(html);
+        System.out.println(plain);
+    }
+}
