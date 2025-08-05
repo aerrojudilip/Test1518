@@ -1,54 +1,69 @@
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.*;
-import org.jsoup.select.*;
+Here are **additional SMART objectives** based on your likely broader contributions in **OpenPages administration, performance engineering, technical leadership, and cross-functional collaboration**.
 
-public class RichTextSimplifier {
+---
 
-    // Convert HTML to plain text with new lines and simple lists
-    public static String convertHtmlToSimpleText(String html) {
-        Document doc = Jsoup.parse(html);
-        return extractSimpleText(doc.body()).trim();
-    }
+### ✅ **Extended SMART Objectives for IBM OpenPages Performance Review**
 
-    // Recursive function to extract only line breaks and list items
-    private static String extractSimpleText(Node node) {
-        StringBuilder sb = new StringBuilder();
+---
 
-        for (Node child : node.childNodes()) {
-            if (child instanceof TextNode) {
-                sb.append(((TextNode) child).text());
-            } else if (child instanceof Element) {
-                Element el = (Element) child;
-                String tag = el.tagName();
+#### 7. **Enhance Disaster Recovery (DR) Readiness**
 
-                switch (tag) {
-                    case "br":
-                        sb.append("\n");
-                        break;
-                    case "p":
-                    case "div":
-                        sb.append(extractSimpleText(el)).append("\n");
-                        break;
-                    case "li":
-                        sb.append("- ").append(extractSimpleText(el)).append("\n");
-                        break;
-                    case "ul":
-                    case "ol":
-                        sb.append(extractSimpleText(el));
-                        break;
-                    default:
-                        sb.append(extractSimpleText(el));
-                        break;
-                }
-            }
-        }
+* **Specific:** Validate OpenPages application functionality and data consistency across all DR environments post-upgrade.
+* **Measurable:** Achieve 100% successful DR failover testing with zero data loss or configuration mismatch.
+* **Achievable:** Coordinate with infrastructure, DBA, and business continuity teams.
+* **Relevant:** Ensures business resilience and compliance with DR standards.
+* **Time-bound:** Completed and documented within two weeks post each DR upgrade.
 
-        return sb.toString();
-    }
+---
 
-    public static void main(String[] args) {
-        String html = "<p>Hello <b>World</b></p><ul><li>One</li><li>Two</li></ul><div>Another line<br>Next line</div>";
-        String plain = convertHtmlToSimpleText(html);
-        System.out.println(plain);
-    }
-}
+#### 8. **Collaborate for Cross-Team Delivery**
+
+* **Specific:** Serve as technical liaison between infrastructure, database, Cognos reporting, and application support teams during OpenPages upgrade and performance optimization.
+* **Measurable:** Resolve 100% of identified cross-team issues within agreed SLAs.
+* **Achievable:** Lead weekly syncs, track dependencies, and resolve blockers.
+* **Relevant:** Promotes smooth end-to-end delivery and system-wide stability.
+* **Time-bound:** Maintained across the entire Q1–Q2 2025 delivery window.
+
+---
+
+#### 9. **Reduce Maintenance and Manual Workload**
+
+* **Specific:** Develop scripts or automation to streamline OpenPages maintenance tasks (e.g., log cleanup, environment validations, restart monitoring).
+* **Measurable:** Reduce manual intervention by at least 70% across key maintenance activities.
+* **Achievable:** Leverage shell scripting or Java automation utilities integrated with cron or scheduler.
+* **Relevant:** Improves productivity and reduces risk of human error.
+* **Time-bound:** Deliver initial toolset by end of Q3 2025.
+
+---
+
+#### 10. **Knowledge Sharing and Documentation**
+
+* **Specific:** Document key processes including the OpenPages upgrade checklist, parallel snapshot framework design, and CUBE integration architecture.
+* **Measurable:** Deliver at least 3 knowledge artifacts in the central repository or Confluence.
+* **Achievable:** Allocate 2 hours per week for structured documentation.
+* **Relevant:** Enables team onboarding, disaster recovery, and audit compliance.
+* **Time-bound:** All documents finalized and shared by end of Q2 2025.
+
+---
+
+#### 11. **Proactively Identify and Mitigate Risks**
+
+* **Specific:** Conduct risk assessments for major OpenPages deployments, focusing on performance degradation, dependency failures, or upgrade fallbacks.
+* **Measurable:** Mitigate 100% of high-priority risks before production deployments.
+* **Achievable:** Use a risk register and pre-deployment testing protocol.
+* **Relevant:** Ensures smooth go-lives with minimal business disruption.
+* **Time-bound:** Performed before each major change or release window.
+
+---
+
+#### 12. **Mentor Junior Team Members**
+
+* **Specific:** Provide technical mentoring to junior developers or analysts on OpenPages configurations, performance tuning, and custom solutions.
+* **Measurable:** Hold bi-weekly knowledge-sharing sessions; assist in 3+ peer deliverables.
+* **Achievable:** Share real project use cases and hands-on examples.
+* **Relevant:** Builds team capability and reduces single-point dependency.
+* **Time-bound:** Active mentoring maintained across 2025 review cycle.
+
+---
+
+Would you like a final, **formatted version (PDF/Word)** of all these SMART objectives or a **summary table** that maps them to core performance competencies (e.g., Technical Excellence, Delivery, Collaboration, Innovation, etc.)?
