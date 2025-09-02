@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Taxonomy Classifier Demo",
+			"type": "shell",
+			"command": "mvn exec:java -Dexec.mainClass=\"com.taxonomy.classifier.TaxonomyClassifierDemo\"",
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

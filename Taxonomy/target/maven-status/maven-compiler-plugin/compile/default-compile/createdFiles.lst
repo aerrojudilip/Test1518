@@ -1,0 +1,7 @@
+com\taxonomy\classifier\HierarchicalTaxonomyClassifier$ClassificationResult.class
+com\taxonomy\training\HierarchicalModelTrainer.class
+com\taxonomy\classifier\HierarchicalTaxonomyClassifier.class
+com\taxonomy\classifier\TaxonomyClassifierDemo.class
+com\taxonomy\data\TaxonomyRecord.class
+com\taxonomy\training\HierarchicalModelTrainer$TrainingConfig.class
+com\taxonomy\data\TaxonomyRecord$CSVReader.class
