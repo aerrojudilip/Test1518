@@ -1,10 +1,8 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
+package com.example.copilotchat;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CopilotAgentCaller {
@@ -12,32 +10,26 @@ public class CopilotAgentCaller {
     private static final Duration TIMEOUT = Duration.ofMinutes(5);
 
     public static void main(String[] args) {
-        String agentName = "OpenPagesRiskAgent";
-
-        String userPrompt = """
-                Find duplicate risks for this description:
-                Vendor failed to complete access review on time.
-                Explain why they are similar.
-                """;
-
-        String workingDirectory = null;
-        // Example:
-        // String workingDirectory = "C:/projects/my-app";
-
         try {
-            String response = callCopilotAgent(agentName, userPrompt, workingDirectory);
-            System.out.println("===== Copilot Agent Response =====");
+            String agentName = "OpenPagesRiskAgent";
+
+            String userPrompt = """
+                    Find duplicate risks for this description:
+                    Vendor failed to complete access review on time.
+                    Explain why they are similar.
+                    """;
+
+            String response = callCopilotAgent(agentName, userPrompt);
+
+            System.out.println("===== Copilot Response =====");
             System.out.println(response);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static String callCopilotAgent(
-            String agentName,
-            String userPrompt,
-            String workingDirectory
-    ) throws Exception {
+    public static String callCopilotAgent(String agentName, String userPrompt) throws Exception {
 
         String finalPrompt = """
                 Use the custom Copilot agent named: %s
@@ -48,37 +40,19 @@ public class CopilotAgentCaller {
                 %s
                 """.formatted(agentName, userPrompt);
 
-        List<String> command = new ArrayList<>();
-
-        /*
-         * Update this command based on your Copilot CLI version.
-         *
-         * Common possible style:
-         *   copilot --prompt "<prompt>"
-         *
-         * If your CLI supports direct agent invocation, change it to something like:
-         *   copilot agent invoke <agentName> "<prompt>"
-         */
-
-        command.add("copilot");
-        command.add("--prompt");
-        command.add(finalPrompt);
-
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-
-        if (workingDirectory != null && !workingDirectory.isBlank()) {
-            File dir = new File(workingDirectory);
-
-            if (!dir.exists() || !dir.isDirectory()) {
-                throw new IllegalArgumentException("Invalid working directory: " + workingDirectory);
-            }
-
-            processBuilder.directory(dir);
-        }
+        ProcessBuilder processBuilder = new ProcessBuilder("copilot");
 
         processBuilder.redirectErrorStream(true);
 
         Process process = processBuilder.start();
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8))) {
+
+            writer.write(finalPrompt);
+            writer.newLine();
+            writer.flush();
+        }
 
         StringBuilder output = new StringBuilder();
 
@@ -86,7 +60,6 @@ public class CopilotAgentCaller {
                 new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
 
             String line;
-
             while ((line = reader.readLine()) != null) {
                 output.append(line).append(System.lineSeparator());
             }
@@ -96,7 +69,7 @@ public class CopilotAgentCaller {
 
         if (!completed) {
             process.destroyForcibly();
-            throw new RuntimeException("Copilot CLI timed out after " + TIMEOUT.toSeconds() + " seconds");
+            throw new RuntimeException("Copilot CLI timed out");
         }
 
         int exitCode = process.exitValue();
